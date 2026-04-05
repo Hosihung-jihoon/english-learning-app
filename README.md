@@ -1,50 +1,198 @@
-# Welcome to your Expo app 👋
+# English Learning App - Team 2
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Ung dung hoc tieng Anh da nen tang (Android - iOS - Web) xay dung bang **Expo SDK 55** + **React Native 0.83**.
 
-## Get started
+[![Expo SDK](https://img.shields.io/badge/Expo-55.0.0-000020?logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-0.83.4-61DAFB?logo=react&logoColor=white)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Muc luc
 
-2. Start the app
+- [Gioi thieu](#gioi-thieu)
+- [Tech Stack](#tech-stack)
+- [Cai dat va Chay du an](#cai-dat-va-chay-du-an)
+- [Cau truc thu muc](#cau-truc-thu-muc)
+- [Bien moi truong](#bien-moi-truong)
+- [Scripts](#scripts)
+- [Quy uoc dong gop](#quy-uoc-dong-gop)
+- [Tai lieu du an](#tai-lieu-du-an)
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Gioi thieu
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**English Learning App** la ung dung di dong giup nguoi dung hoc tieng Anh hieu qua thong qua cac module:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Tu vung** - flashcard, quiz theo chu de
+- **Ngu phap** - bai hoc co vi du va bai tap
+- **Nghe** - luyen nghe voi audio ban ngu
+- **Doc** - doc hieu voi bai doc theo cap do
+- **Theo doi tien trinh** - thong ke hoc tap ca nhan
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Tech Stack
+
+| Cong nghe | Phien ban | Muc dich |
+|---|---|---|
+| [Expo](https://expo.dev) | ~55.0.0 | Framework chinh |
+| [React Native](https://reactnative.dev) | 0.83.4 | UI Engine |
+| [React](https://react.dev) | 19.2.0 | UI Library |
+| [TypeScript](https://typescriptlang.org) | ~5.9.2 | Type safety |
+| [Expo Router](https://expo.github.io/router) | ~55.0.10 | File-based navigation |
+| [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) | 4.2.1 | Animations |
+| fetch (native) | built-in | HTTP client (khong dung axios) |
+
+> **New Architecture** bat buoc tu SDK 55 - legacy architecture da bi loai bo.
+
+---
+
+## Cai dat va Chay du an
+
+### Yeu cau
+
+- [Node.js](https://nodejs.org) >= 18
+- [Git](https://git-scm.com)
+- Dien thoai that cai [Expo Go](https://expo.dev/go) hoac Android Emulator / iOS Simulator
+
+### Cac buoc
 
 ```bash
-npm run reset-project
+# 1. Clone repo
+git clone https://github.com/Hosihung-jihoon/english-learning-app.git
+cd english-learning-app
+
+# 2. Cai dependencies
+npm install
+
+# 3. Tao file bien moi truong
+cp .env.example .env
+# Dien gia tri that vao .env
+
+# 4. Khoi dong dev server
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Mo ung dung
 
-## Learn more
+| Phim | Nen tang |
+|---|---|
+| `a` | Android Emulator |
+| `i` | iOS Simulator (macOS only) |
+| `w` | Web Browser |
+| Quet QR | Expo Go tren dien thoai that |
 
-To learn more about developing your project with Expo, look at the following resources:
+> SDK 55 khuyen nghi dung **Development Build** thay Expo Go cho production.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## Cau truc thu muc
 
-Join our community of developers creating universal apps.
+```
+english-learning-app-t2/
+|
++-- app/                        # Expo Router - tat ca man hinh
+|   +-- _layout.tsx             # Root layout
+|   +-- modal.tsx               # Modal screen
+|   +-- (tabs)/
+|       +-- _layout.tsx
+|       +-- index.tsx           # Home tab
+|       +-- explore.tsx         # Explore tab
+|
++-- components/                 # UI components dung lai
+|   +-- ui/
+|   +-- themed-text.tsx
+|   +-- themed-view.tsx
+|
++-- constants/
+|   +-- theme.ts                # Design tokens
+|
++-- hooks/                      # Custom React hooks
++-- assets/                     # Hinh anh, font, icon
+|
++-- .env                        # SECRET - KHONG commit
++-- .env.example                # Template bien moi truong
++-- system_context.md           # Bo nho du an
++-- .antigravityrules           # Quy tac lam viec voi AI
++-- app.json
++-- package.json
++-- tsconfig.json
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Bien moi truong
+
+Du an dung file `.env` de quan ly secrets. File nay **khong duoc commit** vao Git.
+
+```bash
+cp .env.example .env
+```
+
+Xem [.env.example](.env.example) de biet danh sach bien can thiet.
+
+> Bien phai co tien to `EXPO_PUBLIC_` de truy cap tu client-side.
+
+---
+
+## Scripts
+
+```bash
+npm start              # Khoi dong Expo dev server
+npm run android        # Mo tren Android emulator
+npm run ios            # Mo tren iOS simulator
+npm run web            # Mo tren trinh duyet
+npm run lint           # Kiem tra loi ESLint
+npm run reset-project  # Reset ve scaffold goc
+```
+
+---
+
+## Quy uoc dong gop
+
+### Commit message format
+
+```
+<type>(<scope>): <subject>
+```
+
+| Type | Khi nao dung |
+|---|---|
+| `feat` | Them tinh nang moi |
+| `fix` | Sua bug |
+| `docs` | Cap nhat tai lieu |
+| `style` | Thay doi style/format |
+| `refactor` | Refactor code |
+| `chore` | Cap nhat config, dependencies |
+
+**Vi du:**
+
+```bash
+git commit -m "feat(vocabulary): add flashcard component"
+git commit -m "fix(auth): handle token expiry on 401"
+```
+
+### Checklist truoc khi tao PR
+
+- [ ] Chay `npm run lint` - khong co loi
+- [ ] File `.env` that khong nam trong staged changes
+- [ ] Cap nhat `system_context.md` neu co thay doi kien truc
+
+---
+
+## Tai lieu du an
+
+| File | Muc dich |
+|---|---|
+| [system_context.md](system_context.md) | **Bo nho du an** - doc truoc khi lam viec |
+| [.env.example](.env.example) | Template bien moi truong |
+| [.antigravityrules](.antigravityrules) | Quy tac lam viec voi AI Antigravity |
+
+### Tai nguyen ngoai
+
+- [Expo Documentation](https://docs.expo.dev)
+- [Expo Router Docs](https://expo.github.io/router/docs)
+- [React Native Docs](https://reactnative.dev/docs/getting-started)
+- [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
