@@ -1,6 +1,24 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# ============================================================
+# SECRETS & ENVIRONMENT VARIABLES — KHÔNG BAO GIỜ COMMIT
+# ============================================================
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+.env.*.local
+
+# Giữ lại template an toàn để commit
+!.env.example
+
+# ============================================================
+# EXPO & REACT NATIVE
+# ============================================================
+
+# Dependencies
 node_modules/
 
 # Expo
@@ -9,35 +27,76 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native build output (generated)
+/ios
+/android
 .kotlin/
+
+# Native cert & signing
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.keystore
 
-# Metro
+# Metro bundler
 .metro-health-check*
 
-# debug
+# ============================================================
+# BUILD ARTIFACTS
+# ============================================================
+build/
+*.apk
+*.aab
+*.ipa
+*.app
+
+# ============================================================
+# LOGS & DEBUG
+# ============================================================
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
+
+# ============================================================
+# EDITORS & IDE
+# ============================================================
 
 # macOS
 .DS_Store
-*.pem
+.AppleDouble
+.LSOverride
 
-# local env files
-.env*.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# typescript
+# Linux
+*~
+
+# VSCode (giữ lại settings chung, bỏ settings cá nhân)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# JetBrains
+.idea/
+*.iml
+
+# ============================================================
+# TYPESCRIPT
+# ============================================================
 *.tsbuildinfo
 
+# ============================================================
+# MISC
+# ============================================================
+*.pem
 app-example
-
-# generated native folders
-/ios
-/android
+.turbo/

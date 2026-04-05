@@ -1,0 +1,111 @@
+# .antigravityrules
+# Quy tắc làm việc cho AI Antigravity trong dự án: english-learning-app-t2
+# Mọi phiên làm việc với Antigravity sẽ tuân thủ các quy tắc dưới đây.
+
+# ============================================================
+# 1. BỘ NHỚ DỰ ÁN – ĐỌC TRƯỚC KHI LÀM BẤT CỨ ĐIỀU GÌ
+# ============================================================
+# Luôn đọc system_context.md trước khi bắt đầu bất kỳ tác vụ nào.
+# Sau khi hoàn thành tác vụ lớn, cập nhật system_context.md (lịch sử, module status, ADR).
+
+# ============================================================
+# 2. BẢO MẬT & SECRETS – QUY TẮC BẤT BIẾN
+# ============================================================
+
+# Khi tạo file mới có chứa secrets:
+# - LUÔN tạo file .env.example kèm theo với placeholder thay vì giá trị thật
+# - KIỂM TRA .gitignore đã có entry cho file secrets thật (ví dụ: .env, *.key)
+# - KHÔNG BAO GIỜ hardcode API keys, passwords, tokens vào source code
+# - KHÔNG BAO GIỜ commit file .env thật
+
+# Ví dụ cấu trúc .env.example đúng:
+# EXPO_PUBLIC_API_BASE_URL=https://your-api-url.com
+# EXPO_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
+
+# Khi thêm biến môi trường mới:
+# 1. Thêm vào .env (giá trị thật) → KHÔNG commit
+# 2. Thêm vào .env.example (placeholder) → commit
+# 3. Cập nhật mục "Environment Variables" trong system_context.md
+
+# ============================================================
+# 3. TIẾT KIỆM QUOTA – NGUYÊN TẮC HIỆU QUẢ
+# ============================================================
+
+# Trước khi tạo code mới:
+# - Kiểm tra component/hook/utility tương tự đã tồn tại chưa
+# - Ưu tiên mở rộng code hiện có thay vì viết từ đầu
+# - Đọc tối thiểu file cần thiết, không đọc toàn bộ project
+
+# Khi sửa bug:
+# - Đọc đúng file có vấn đề, không scan toàn bộ codebase
+# - Sửa pinpoint, không refactor toàn bộ khi không được yêu cầu
+
+# Khi generate code lớn:
+# - Chia nhỏ thành các bước, confirm với user sau mỗi bước quan trọng
+# - Không tạo code placeholder/stub không cần thiết
+
+# ============================================================
+# 4. LOGIC CỐT LÕI – EXPO / REACT NATIVE
+# ============================================================
+
+# Stack bắt buộc (KHÔNG thay thế trừ khi được yêu cầu):
+# - Expo SDK ~54 (KHÔNG upgrade minor version mà không hỏi)
+# - Expo Router v6 cho tất cả navigation (KHÔNG dùng React Navigation trực tiếp)
+# - TypeScript strict (KHÔNG dùng 'any')
+# - StyleSheet.create + constants/theme.ts (KHÔNG dùng inline style ad-hoc lớn)
+
+# Naming conventions bắt buộc:
+# - Components: PascalCase
+# - Files/folders: kebab-case
+# - Hooks: tiền tố 'use'
+# - Constants tĩnh: UPPER_SNAKE_CASE
+# - Biến môi trường client: tiền tố EXPO_PUBLIC_
+
+# Màn hình mới:
+# - Tạo file trong app/ theo cấu trúc folder = URL path
+# - Dùng _layout.tsx cho shared layout
+# - KHÔNG tạo Navigator thủ công, để Expo Router tự xử lý
+
+# ============================================================
+# 5. CHẤT LƯỢNG CODE
+# ============================================================
+
+# Luôn:
+# - Thêm TypeScript types/interfaces đầy đủ
+# - Xử lý loading state và error state cho async operations
+# - Hỗ trợ dark mode (useColorScheme hook)
+# - Dùng expo-haptics cho interactive feedback nếu phù hợp
+# - Component phải có key prop khi render danh sách
+
+# Không:
+# - Dùng console.log trong production code (dùng __DEV__ guard)
+# - Để TODO/FIXME không giải thích trong code commit
+# - Tạo useEffect với dependency array sai
+
+# ============================================================
+# 6. GIT & WORKFLOW
+# ============================================================
+
+# Commit message format: <type>(<scope>): <subject>
+# type: feat | fix | docs | style | refactor | test | chore
+# Ví dụ:
+# feat(vocabulary): add flashcard component
+# fix(auth): handle token refresh on 401
+# docs(system): update module status in system_context.md
+
+# Trước khi tạo PR:
+# - Chạy: npm run lint
+# - Đảm bảo không có file .env thật trong staged changes
+# - Cập nhật system_context.md nếu có thay đổi kiến trúc
+
+# ============================================================
+# 7. PHẢN HỒI & REVIEW
+# ============================================================
+
+# Khi không chắc về yêu cầu:
+# - Hỏi lại thay vì đoán và viết code sai
+# - Nêu rõ assumption nếu có
+
+# Khi đề xuất thay đổi lớn (kiến trúc, dependency mới):
+# - Trình bày lý do, ưu/nhược điểm
+# - Chờ user approve trước khi thực thi
