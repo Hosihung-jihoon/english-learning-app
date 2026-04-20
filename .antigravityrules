@@ -1,111 +1,142 @@
 # .antigravityrules
-# Quy tắc làm việc cho AI Antigravity trong dự án: english-learning-app-t2
-# Mọi phiên làm việc với Antigravity sẽ tuân thủ các quy tắc dưới đây.
+# Quy tắc làm việc cho AI Antigravity — English Learning App (Monorepo-lite)
+# Cập nhật: 2026-04-20 v2.0
 
 # ============================================================
-# 1. BỘ NHỚ DỰ ÁN – ĐỌC TRƯỚC KHI LÀM BẤT CỨ ĐIỀU GÌ
+# 1. BỘ NHỚ DỰ ÁN — ĐỌC TRƯỚC KHI LÀM BẤT CỨ ĐIỀU GÌ
 # ============================================================
 # Luôn đọc system_context.md trước khi bắt đầu bất kỳ tác vụ nào.
-# Sau khi hoàn thành tác vụ lớn, cập nhật system_context.md (lịch sử, module status, ADR).
+# Cập nhật system_context.md sau khi hoàn thành tác vụ lớn.
 
 # ============================================================
-# 2. BẢO MẬT & SECRETS – QUY TẮC BẤT BIẾN
+# 2. CẤU TRÚC DỰ ÁN — HIỂU RÕ TRƯỚC KHI TẠO FILE
 # ============================================================
+# Repo có 3 package chính:
+#   api/      → Backend Node.js + Express + MongoDB
+#   mobile/   → Frontend Expo SDK 55 + React Native
+#   shared/   → Types + constants dùng chung, KHÔNG có node_modules riêng
+#
+# Khi tạo file mới, xác định đúng vị trí:
+#   - Mongoose model → api/src/models/
+#   - Express route  → api/src/routes/
+#   - Expo screen    → mobile/app/
+#   - React component → mobile/components/
+#   - TypeScript interface → shared/types/index.ts
+#   - API route constant  → shared/constants/index.ts
 
+# ============================================================
+# 3. BẢO MẬT & SECRETS — QUY TẮC BẤT BIẾN
+# ============================================================
 # Khi tạo file mới có chứa secrets:
-# - LUÔN tạo file .env.example kèm theo với placeholder thay vì giá trị thật
-# - KIỂM TRA .gitignore đã có entry cho file secrets thật (ví dụ: .env, *.key)
-# - KHÔNG BAO GIỜ hardcode API keys, passwords, tokens vào source code
+# - LUÔN tạo .env.example kèm theo với placeholder
+# - KIỂM TRA .gitignore đã có entry
+# - KHÔNG BAO GIỜ hardcode API key, password, token trong code
 # - KHÔNG BAO GIỜ commit file .env thật
-
-# Ví dụ cấu trúc .env.example đúng:
-# EXPO_PUBLIC_API_BASE_URL=https://your-api-url.com
-# EXPO_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID_HERE
-
+#
+# Secrets của từng package:
+#   api/.env     → MONGO_URI, JWT_SECRET, PORT
+#   mobile/.env  → EXPO_PUBLIC_API_BASE_URL
+#
 # Khi thêm biến môi trường mới:
-# 1. Thêm vào .env (giá trị thật) → KHÔNG commit
-# 2. Thêm vào .env.example (placeholder) → commit
-# 3. Cập nhật mục "Environment Variables" trong system_context.md
+#   1. Thêm vào .env (giá trị thật)
+#   2. Thêm vào .env.example (placeholder)
+#   3. Cập nhật mục "Environment Variables" trong system_context.md
 
 # ============================================================
-# 3. TIẾT KIỆM QUOTA – NGUYÊN TẮC HIỆU QUẢ
+# 4. TIẾT KIỆM QUOTA — NGUYÊN TẮC HIỆU QUẢ
 # ============================================================
-
 # Trước khi tạo code mới:
-# - Kiểm tra component/hook/utility tương tự đã tồn tại chưa
-# - Ưu tiên mở rộng code hiện có thay vì viết từ đầu
-# - Đọc tối thiểu file cần thiết, không đọc toàn bộ project
-
+#   - Kiểm tra shared/types/index.ts — type đã có chưa?
+#   - Kiểm tra shared/constants/index.ts — constant đã có chưa?
+#   - Đọc đúng file cần sửa, không scan toàn bộ project
+#
 # Khi sửa bug:
-# - Đọc đúng file có vấn đề, không scan toàn bộ codebase
-# - Sửa pinpoint, không refactor toàn bộ khi không được yêu cầu
-
-# Khi generate code lớn:
-# - Chia nhỏ thành các bước, confirm với user sau mỗi bước quan trọng
-# - Không tạo code placeholder/stub không cần thiết
-
-# ============================================================
-# 4. LOGIC CỐT LÕI – EXPO / REACT NATIVE
-# ============================================================
-
-# Stack bắt buộc (KHÔNG thay thế trừ khi được yêu cầu):
-# - Expo SDK ~54 (KHÔNG upgrade minor version mà không hỏi)
-# - Expo Router v6 cho tất cả navigation (KHÔNG dùng React Navigation trực tiếp)
-# - TypeScript strict (KHÔNG dùng 'any')
-# - StyleSheet.create + constants/theme.ts (KHÔNG dùng inline style ad-hoc lớn)
-
-# Naming conventions bắt buộc:
-# - Components: PascalCase
-# - Files/folders: kebab-case
-# - Hooks: tiền tố 'use'
-# - Constants tĩnh: UPPER_SNAKE_CASE
-# - Biến môi trường client: tiền tố EXPO_PUBLIC_
-
-# Màn hình mới:
-# - Tạo file trong app/ theo cấu trúc folder = URL path
-# - Dùng _layout.tsx cho shared layout
-# - KHÔNG tạo Navigator thủ công, để Expo Router tự xử lý
+#   - Đọc file có vấn đề trước
+#   - Sửa pinpoint, không refactor toàn bộ trừ khi được yêu cầu
+#
+# Khi tạo Mongoose model mới:
+#   - Luôn import type từ shared/types thay vì định nghĩa lại
 
 # ============================================================
-# 5. CHẤT LƯỢNG CODE
+# 5. LOGIC CỐT LÕI — BACKEND (api/)
 # ============================================================
-
-# Luôn:
-# - Thêm TypeScript types/interfaces đầy đủ
-# - Xử lý loading state và error state cho async operations
-# - Hỗ trợ dark mode (useColorScheme hook)
-# - Dùng expo-haptics cho interactive feedback nếu phù hợp
-# - Component phải có key prop khi render danh sách
-
-# Không:
-# - Dùng console.log trong production code (dùng __DEV__ guard)
-# - Để TODO/FIXME không giải thích trong code commit
-# - Tạo useEffect với dependency array sai
+# Stack bắt buộc: Express + Mongoose + TypeScript
+# Pattern chuẩn cho controller:
+#   try { ... res.json({ success: true, data }) }
+#   catch(err) { res.status(500).json({ success: false, message: err.message }) }
+#
+# REST conventions:
+#   GET    /api/<resource>      → list all
+#   GET    /api/<resource>/:id  → get one
+#   POST   /api/<resource>      → create
+#   PUT    /api/<resource>/:id  → update
+#   DELETE /api/<resource>/:id  → delete
+#
+# Auth: JWT Bearer token trong header
+#   Authorization: Bearer <token>
+#
+# Mongoose: KHÔNG dùng .findById().exec() — dùng await trực tiếp
+# KHÔNG dùng callbacks — luôn dùng async/await
 
 # ============================================================
-# 6. GIT & WORKFLOW
+# 6. LOGIC CỐT LÕI — MOBILE (mobile/)
 # ============================================================
+# Stack bắt buộc (KHÔNG thay thế):
+#   - Expo SDK ~55.0.0
+#   - Expo Router v55 (file-based) — KHÔNG dùng React Navigation trực tiếp
+#   - fetch native — KHÔNG cài axios
+#   - StyleSheet.create + constants/theme.ts
+#   - TypeScript strict
+#
+# HTTP client pattern chuẩn:
+#   import { API_ROUTES } from '../../shared/constants';
+#   const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+#   const res = await fetch(`${BASE_URL}${API_ROUTES.LESSONS}`);
+#   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+#
+# Naming conventions:
+#   Components: PascalCase
+#   Files: kebab-case
+#   Hooks: tiền tố 'use'
+#   Màn hình mới: tạo file trong mobile/app/
 
-# Commit message format: <type>(<scope>): <subject>
+# ============================================================
+# 7. SHARED TYPES & CONSTANTS
+# ============================================================
+# shared/types/index.ts chứa tất cả interfaces: User, Lesson, Vocabulary, Quiz...
+# shared/constants/index.ts chứa: API_ROUTES, ERROR_CODES, APP_CONFIG
+#
+# Import trong api/:
+#   import type { Lesson } from '../../shared/types';
+#   import { API_ROUTES } from '../../shared/constants';
+#
+# Import trong mobile/:
+#   import type { Lesson } from '../../shared/types';
+#   import { API_ROUTES } from '../../shared/constants';
+#
+# KHÔNG định nghĩa lại type đã có trong shared/ ở các package con.
+
+# ============================================================
+# 8. GIT & WORKFLOW
+# ============================================================
+# Commit message: <type>(<scope>): <subject>
 # type: feat | fix | docs | style | refactor | test | chore
+# scope: api | mobile | shared | root
+#
 # Ví dụ:
-# feat(vocabulary): add flashcard component
-# fix(auth): handle token refresh on 401
-# docs(system): update module status in system_context.md
-
-# Trước khi tạo PR:
-# - Chạy: npm run lint
-# - Đảm bảo không có file .env thật trong staged changes
-# - Cập nhật system_context.md nếu có thay đổi kiến trúc
+#   feat(api): add lesson CRUD endpoints
+#   feat(mobile): add vocabulary flashcard screen
+#   fix(api): handle mongoose connection error
+#   docs(root): update system_context.md module status
+#
+# Quy tắc trước khi tạo PR/commit lớn:
+#   - cd mobile && npm run lint
+#   - Không có file .env thật trong staged changes
+#   - Cập nhật system_context.md nếu có thay đổi kiến trúc
 
 # ============================================================
-# 7. PHẢN HỒI & REVIEW
+# 9. PHẢN HỒI & REVIEW
 # ============================================================
-
-# Khi không chắc về yêu cầu:
-# - Hỏi lại thay vì đoán và viết code sai
-# - Nêu rõ assumption nếu có
-
-# Khi đề xuất thay đổi lớn (kiến trúc, dependency mới):
-# - Trình bày lý do, ưu/nhược điểm
-# - Chờ user approve trước khi thực thi
+# Khi không chắc về yêu cầu → hỏi lại, không đoán
+# Khi đề xuất thay đổi lớn (thêm package, đổi kiến trúc) → trình bày lý do, chờ approve
+# Khi context không rõ → luôn đọc system_context.md trước

@@ -1,4 +1,4 @@
-# 📚 SYSTEM CONTEXT — english-learning-app-t2
+# 📚 SYSTEM CONTEXT — English Learning App (Monorepo-lite)
 > **⚠️ BẮT BUỘC ĐỌC TRƯỚC KHI LÀM VIỆC.**
 > File này là **bộ nhớ duy nhất** của toàn bộ dự án.
 > Mọi phiên làm việc mới (AI hoặc thành viên mới) **phải đọc file này trước tiên**.
@@ -11,236 +11,204 @@
 | Trường | Giá trị |
 |---|---|
 | **Tên dự án** | English Learning App – Team 2 |
-| **Loại** | Mobile App (React Native / Expo) |
-| **Mục tiêu** | Ứng dụng học tiếng Anh hỗ trợ người dùng luyện từ vựng, ngữ pháp, kỹ năng nghe/đọc |
-| **Nền tảng target** | Android, iOS, Web (Expo Router) |
-| **Expo SDK** | ~55.0.0 |
-| **React Native** | 0.83.4 |
-| **React** | 19.2.0 |
-| **TypeScript** | ~5.9.2 |
-| **Routing** | Expo Router v55 (file-based) |
-| **HTTP Client** | `fetch` (native, không dùng axios) |
-| **New Architecture** | ✅ Bắt buộc từ SDK 55 (legacy arch đã bị loại bỏ) |
-| **Trạng thái hiện tại** | 🟡 Đang phát triển — scaffold ban đầu |
+| **Loại** | Full-stack Mobile App (MERN + Expo) |
+| **Mục tiêu** | Ứng dụng học tiếng Anh: từ vựng, ngữ pháp, nghe, đọc, quiz |
+| **Nền tảng target** | Android, iOS, Web |
+| **Kiến trúc** | Monorepo-lite (1 repo, 3 folder, không npm workspaces) |
+| **Timeline** | 5 tuần — Đồ án môn Lập trình ứng dụng |
+| **Trạng thái** | 🟡 Đang phát triển |
+
+### Team
+| Vai trò | Trách nhiệm |
+|---|---|
+| Leader | Backend (api/) + Mobile core logic + Kiến trúc |
+| Member 1 | UI/UX — thiết kế giao diện mobile |
+| Member 2 | Testing — kiểm thử tính năng |
 
 ---
 
 ## 2. Kiến trúc dự án
 
 ```
-english-learning-app-t2/
+english-learning-app-t2/              ← root repo
 │
-├── app/                        # Expo Router – tất cả màn hình
-│   ├── _layout.tsx             # Root layout (providers, themes)
-│   ├── modal.tsx               # Modal screen
-│   └── (tabs)/                 # Tab navigator
-│       ├── _layout.tsx         # Tab bar config
-│       ├── index.tsx           # Home tab
-│       └── explore.tsx         # Explore tab
+├── api/                               # Backend — Node.js + Express + MongoDB
+│   ├── src/
+│   │   ├── routes/                    # Định nghĩa API endpoints
+│   │   ├── controllers/               # Business logic
+│   │   ├── models/                    # Mongoose schemas (DB models)
+│   │   ├── middleware/                # Auth, error handling...
+│   │   └── index.ts                   # Entry point — khởi động server
+│   ├── .env                           # 🔒 SECRET — KHÔNG commit
+│   ├── .env.example                   # ✅ Template an toàn
+│   ├── package.json
+│   └── tsconfig.json
 │
-├── components/                 # UI components dùng lại
-│   ├── ui/                     # Atomic UI components
-│   ├── external-link.tsx
-│   ├── haptic-tab.tsx
-│   ├── hello-wave.tsx
-│   ├── parallax-scroll-view.tsx
-│   ├── themed-text.tsx
-│   └── themed-view.tsx
+├── mobile/                            # Frontend — Expo SDK 55
+│   ├── app/                           # Expo Router — màn hình
+│   │   ├── _layout.tsx                # Root layout
+│   │   ├── modal.tsx
+│   │   └── (tabs)/                    # Tab navigation
+│   ├── components/                    # UI components dùng lại
+│   ├── constants/                     # Mobile-only constants
+│   ├── hooks/                         # Custom React hooks
+│   ├── assets/                        # Hình ảnh, font, icon
+│   ├── .env                           # 🔒 SECRET — KHÔNG commit
+│   ├── .env.example                   # ✅ Template an toàn
+│   ├── app.json                       # Expo config
+│   ├── package.json
+│   └── tsconfig.json
 │
-├── constants/
-│   └── theme.ts                # Design tokens: màu sắc, font, spacing
+├── shared/                            # Code dùng chung (không có package.json)
+│   ├── types/
+│   │   └── index.ts                   # TypeScript interfaces: User, Lesson, Vocab...
+│   └── constants/
+│       └── index.ts                   # API_ROUTES, ERROR_CODES, APP_CONFIG
 │
-├── hooks/                      # Custom React hooks
-├── assets/                     # Hình ảnh, font, icon
-├── scripts/                    # Utility scripts (reset-project, v.v.)
-│
-├── .env                        # 🔒 SECRET – KHÔNG commit (đã có trong .gitignore)
-├── .env.example                # ✅ Template an toàn để commit
-├── app.json                    # Expo config
-├── package.json
-├── tsconfig.json
+├── package.json                       # Root scripts tiện lợi (không phải workspaces)
 ├── .gitignore
-├── .antigravityrules           # Quy tắc làm việc với AI Antigravity
-└── system_context.md           # 📌 FILE NÀY – bộ nhớ dự án
+├── .antigravityrules                  # Quy tắc làm việc với AI
+├── system_context.md                  # 📌 FILE NÀY
+└── README.md
 ```
 
 ---
 
-## 3. Stack & Dependencies chính
+## 3. Stack & Dependencies
 
-### Runtime
+### Backend (`api/`)
+| Package | Version | Mục đích |
+|---|---|---|
+| `express` | ^4.19 | Web framework |
+| `mongoose` | ^8.4 | MongoDB ODM |
+| `dotenv` | ^16.4 | Biến môi trường |
+| `cors` | ^2.8 | Cross-origin requests |
+| `ts-node-dev` | ^2.0 | Dev server với hot reload |
+| `typescript` | ~5.9 | Type safety |
+
+### Frontend (`mobile/`)
 | Package | Version | Mục đích |
 |---|---|---|
 | `expo` | ~55.0.0 | Framework chính |
 | `expo-router` | ~55.0.10 | File-based routing |
 | `react-native` | 0.83.4 | Core RN |
-| `react` | 19.2.0 | UI library |
+| `react` | 19.2.0 | UI Library |
 | `react-native-reanimated` | 4.2.1 | Animations |
-| `react-native-gesture-handler` | ~2.30.0 | Gesture handling |
-| `react-native-screens` | ~4.23.0 | Screen optimization |
-| `react-native-safe-area-context` | ~5.6.0 | Safe area insets |
-| `expo-haptics` | ~55.0.11 | Haptic feedback |
-| `expo-image` | ~55.0.8 | Optimized image |
-| `expo-constants` | ~55.0.11 | App constants |
-| `expo-font` | ~55.0.6 | Custom fonts |
-| `expo-linking` | ~55.0.11 | Deep linking |
-| `expo-splash-screen` | ~55.0.15 | Splash screen |
-| `expo-status-bar` | ~55.0.5 | Status bar control |
-| `expo-system-ui` | ~55.0.13 | System UI |
-| `expo-web-browser` | ~55.0.12 | In-app browser |
-| `@expo/vector-icons` | ^15.0.3 | Icon set |
-| `@react-navigation/bottom-tabs` | ^7.4.0 | Tab navigation |
+| `fetch` (native) | built-in | HTTP client (không dùng axios) |
 
-> **HTTP**: Dùng `fetch` API native — **không cài axios**. Xem mục "Quy ước HTTP / fetch" bên dưới.
-
-### Dev
-| Package | Version | Mục đích |
-|---|---|---|
-| `typescript` | ~5.9.2 | Type safety |
-| `eslint` + `eslint-config-expo` | ^9.25.0 / ~55.0.0 | Linting |
-| `@types/react` | ~19.2.10 | React type definitions |
+> **New Architecture** bắt buộc từ Expo SDK 55.
 
 ---
 
 ## 4. Quy ước code
 
 ### Naming
-- **File/folder**: `kebab-case` cho components (`themed-text.tsx`)
-- **Component**: `PascalCase` (`ThemedText`)
-- **Hook**: tiền tố `use` (`useColorScheme`)
-- **Constant**: `UPPER_SNAKE_CASE` cho giá trị tĩnh
+- **File/folder**: `kebab-case` (`lesson-controller.ts`, `themed-text.tsx`)
+- **Component React**: `PascalCase` (`ThemedText`, `LessonCard`)
+- **Hook**: tiền tố `use` (`useColorScheme`, `useLessons`)
+- **Constant tĩnh**: `UPPER_SNAKE_CASE` (`API_ROUTES`, `MAX_RETRIES`)
+- **Mongoose model**: `PascalCase` singular (`Lesson`, `User`)
 
 ### TypeScript
-- Luôn dùng TypeScript strict mode (`tsconfig.json` hiện tại)
-- Tránh `any` – dùng `unknown` nếu cần
-- Props interface đặt ngay trên component
+- Luôn dùng strict mode
+- Tránh `any` — dùng `unknown` nếu chưa biết type
+- Import types từ `shared/types` thay vì định nghĩa lại
 
-### Styling
-- Dùng `StyleSheet.create()` của React Native (không dùng inline style lớn)
-- Design tokens lấy từ `constants/theme.ts`
-- Hỗ trợ Dark Mode thông qua `useColorScheme()` hook
+### HTTP / fetch (Mobile)
+> ⚠️ Dự án dùng `fetch` native — **KHÔNG cài axios**.
 
-### Expo Router
-- Màn hình mới: tạo file trong `app/` theo cấu trúc thư mục = URL path
-- Layout chia sẻ: dùng `_layout.tsx`
-- Tabs: thêm vào `app/(tabs)/`
+```typescript
+// ✅ ĐÚNG — dùng fetch + shared constants
+import { API_ROUTES } from '../../shared/constants';
 
-### Quy ước HTTP / fetch
-> ⚠️ Dự án dùng **`fetch` native**, KHÔNG dùng `axios`. Đây là ADR-005.
-
-```ts
-// ✅ ĐÚNG — dùng fetch
-const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/lessons`);
-if (!response.ok) throw new Error(`HTTP ${response.status}`);
-const data = await response.json();
-
-// ❌ SAI — không import axios
-import axios from 'axios';
+const res = await fetch(`${BASE_URL}${API_ROUTES.LESSONS}`);
+if (!res.ok) throw new Error(`HTTP ${res.status}`);
+const data = await res.json();
 ```
 
-**Pattern helper khuyến nghị** — tạo `lib/api.ts`:
-```ts
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
-  return res.json() as Promise<T>;
-}
-
-export const api = {
-  get:    <T>(path: string)                    => apiFetch<T>(path),
-  post:   <T>(path: string, body: unknown)     => apiFetch<T>(path, { method: 'POST',   body: JSON.stringify(body) }),
-  put:    <T>(path: string, body: unknown)     => apiFetch<T>(path, { method: 'PUT',    body: JSON.stringify(body) }),
-  delete: <T>(path: string)                   => apiFetch<T>(path, { method: 'DELETE' }),
-};
+### REST API (Backend)
+```
+GET    /api/lessons          → lấy danh sách
+GET    /api/lessons/:id      → lấy 1 item
+POST   /api/lessons          → tạo mới
+PUT    /api/lessons/:id      → cập nhật
+DELETE /api/lessons/:id      → xóa
 ```
 
 ---
 
 ## 5. Environment Variables & Secrets
 
-> **Quy tắc bất biến**: Không bao giờ commit secrets thật vào Git.
-
 | File | Mục đích | Commit? |
 |---|---|---|
-| `.env` | Giá trị thật (API keys, secrets) | ❌ KHÔNG |
-| `.env.example` | Template với placeholder | ✅ CÓ |
+| `api/.env` | Secrets backend (MONGO_URI, JWT_SECRET) | ❌ KHÔNG |
+| `api/.env.example` | Template backend | ✅ CÓ |
+| `mobile/.env` | Secrets mobile (API_BASE_URL) | ❌ KHÔNG |
+| `mobile/.env.example` | Template mobile | ✅ CÓ |
 
-### Biến môi trường cần thiết (xem `.env.example`)
+### Biến quan trọng
 ```bash
-# API & Backend
-EXPO_PUBLIC_API_BASE_URL=        # Base URL của backend API
+# api/.env
+MONGO_URI=mongodb+srv://...    # Kết nối MongoDB Atlas
+JWT_SECRET=...                 # Dùng để ký JWT token
+PORT=5000
 
-# Authentication (nếu dùng)
-EXPO_PUBLIC_GOOGLE_CLIENT_ID=    # Google OAuth Client ID
-
-# AI / External Services (nếu dùng)
-EXPO_PUBLIC_OPENAI_API_KEY=      # OpenAI hoặc tương đương
-
-# Analytics (nếu dùng)
-EXPO_PUBLIC_ANALYTICS_KEY=
+# mobile/.env
+EXPO_PUBLIC_API_BASE_URL=http://localhost:5000   # URL backend khi dev
 ```
-
-> **Lưu ý Expo**: Biến phải có tiền tố `EXPO_PUBLIC_` để truy cập từ client-side.
-> Biến không có tiền tố này chỉ dùng được trong `app.config.js` (server-side build).
 
 ---
 
-## 6. Luồng phát triển (Getting Started)
+## 6. Getting Started
 
 ```bash
-# 1. Clone repo
-git clone <repo-url>
-cd english-learning-app-t2
+# Clone
+git clone https://github.com/Hosihung-jihoon/english-learning-app.git
+cd english-learning-app
 
-# 2. Cài dependencies
+# Cài root dependencies (concurrently)
 npm install
 
-# 3. Tạo file env từ template
-cp .env.example .env
-# Điền giá trị thật vào .env (hỏi team lead)
+# Cài dependencies cho từng package
+npm run install:all
 
-# 4. Chạy dev server
-npx expo start
+# Tạo file .env từ template
+cp api/.env.example api/.env       # Điền MONGO_URI + JWT_SECRET
+cp mobile/.env.example mobile/.env  # Điền API_BASE_URL
 
-# Mở trên:
-# - Expo Go app (quét QR)
-# - Android emulator: nhấn 'a'
-# - iOS simulator: nhấn 'i'  
-# - Web browser: nhấn 'w'
+# Chạy cả API + Mobile cùng lúc
+npm run dev
+# hoặc riêng lẻ:
+npm run dev:api
+npm run dev:mobile
 ```
 
 ---
 
-## 7. Các module / tính năng (cập nhật khi thêm)
+## 7. Các module / tính năng
 
-| Module | Trạng thái | Màn hình | Người phụ trách |
-|---|---|---|---|
-| Home / Dashboard | 🟡 Scaffold | `app/(tabs)/index.tsx` | TBD |
-| Explore | 🟡 Scaffold | `app/(tabs)/explore.tsx` | TBD |
-| Vocabulary | ⬜ Chưa làm | — | TBD |
-| Grammar | ⬜ Chưa làm | — | TBD |
-| Listening | ⬜ Chưa làm | — | TBD |
-| Reading | ⬜ Chưa làm | — | TBD |
-| User Profile | ⬜ Chưa làm | — | TBD |
-| Authentication | ⬜ Chưa làm | — | TBD |
-| Progress Tracking | ⬜ Chưa làm | — | TBD |
+| Module | API Route | Mobile Screen | Trạng thái | Người làm |
+|---|---|---|---|---|
+| Authentication | `/api/auth` | `app/(tabs)/` | ⬜ Chưa làm | Leader |
+| Lessons | `/api/lessons` | `app/(tabs)/explore` | ⬜ Chưa làm | Leader |
+| Vocabulary | `/api/vocabulary` | — | ⬜ Chưa làm | Leader |
+| Quiz | `/api/quiz` | — | ⬜ Chưa làm | Leader |
+| Progress | `/api/progress` | — | ⬜ Chưa làm | Leader |
+| Home UI | — | `app/(tabs)/index` | 🟡 Scaffold | Member 1 |
 
 ---
 
-## 8. Quyết định kiến trúc đã xác nhận (ADR)
+## 8. Quyết định kiến trúc (ADR)
 
 | # | Quyết định | Lý do | Ngày |
 |---|---|---|---|
-| ADR-001 | Dùng Expo Router (file-based) | Đơn giản hóa navigation, deep linking built-in | 2026-04-05 |
-| ADR-002 | TypeScript strict mode | Giảm bug runtime, IDE support tốt hơn | 2026-04-05 |
-| ADR-003 | `StyleSheet.create` + theme tokens | Nhất quán UI, dễ maintenance | 2026-04-05 |
-| ADR-004 | New Architecture bắt buộc (SDK 55) | Legacy arch bị loại bỏ, hiệu năng cao hơn | 2026-04-05 |
-| ADR-005 | Dùng `fetch` native thay cho `axios` | Không thêm dependency, bundle nhỏ hơn, đủ dùng cho mọi use case | 2026-04-05 |
+| ADR-001 | Expo Router file-based | Navigation tự động, deep linking built-in | 2026-04-05 |
+| ADR-002 | TypeScript strict mode | Giảm bug runtime | 2026-04-05 |
+| ADR-003 | `StyleSheet.create` + theme tokens | Nhất quán UI | 2026-04-05 |
+| ADR-004 | New Architecture (SDK 55) | Bắt buộc, hiệu năng tốt hơn | 2026-04-05 |
+| ADR-005 | `fetch` thay `axios` | Không thêm dependency, đủ dùng | 2026-04-05 |
+| ADR-006 | Monorepo-lite (không npm workspaces) | 1 leader code, 5 tuần — overhead không đáng | 2026-04-20 |
+| ADR-007 | `shared/` dùng relative import | Đơn giản hơn workspace config, đủ dùng cho scale dự án | 2026-04-20 |
 
 ---
 
@@ -248,8 +216,9 @@ npx expo start
 
 | Ngày | Phiên bản | Thay đổi | Người cập nhật |
 |---|---|---|---|
-| 2026-04-05 | v1.0 | Tạo file ban đầu từ scaffold Expo SDK 54 | AI (Antigravity) |
-| 2026-04-05 | v1.1 | Nâng cấp Expo SDK 54 → 55 (RN 0.83.4, React 19.2.0); xác nhận fetch thay axios; xóa `newArchEnabled` khỏi app.json | AI (Antigravity) |
+| 2026-04-05 | v1.0 | Tạo file ban đầu — Expo SDK 54 scaffold | AI (Antigravity) |
+| 2026-04-05 | v1.1 | Nâng cấp SDK 54 → 55; fetch thay axios | AI (Antigravity) |
+| 2026-04-20 | v2.0 | Restructure sang monorepo-lite: thêm `api/`, `shared/`, di chuyển Expo vào `mobile/` | AI (Antigravity) |
 
 ---
 

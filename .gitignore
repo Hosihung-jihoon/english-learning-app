@@ -1,7 +1,5 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # ============================================================
-# SECRETS & ENVIRONMENT VARIABLES — KHÔNG BAO GIỜ COMMIT
+# SECRETS & ENVIRONMENT — KHÔNG BAO GIỜ COMMIT
 # ============================================================
 .env
 .env.local
@@ -10,51 +8,56 @@
 .env.staging
 .env.test
 .env.*.local
-
-# Giữ lại template an toàn để commit
 !.env.example
 
 # ============================================================
-# EXPO & REACT NATIVE
+# MOBILE (Expo / React Native)
 # ============================================================
-
-# Dependencies
-node_modules/
-
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# Native build output (generated)
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/.kotlin/
+mobile/*.orig.*
+mobile/.metro-health-check*
+mobile/*.tsbuildinfo
 /ios
 /android
-.kotlin/
+mobile/ios/
+mobile/android/
 
-# Native cert & signing
-*.orig.*
+# ============================================================
+# API (Node.js)
+# ============================================================
+api/node_modules/
+api/dist/
+api/*.log
+api/logs/
+
+# ============================================================
+# BUILD / NATIVE ARTIFACTS
+# ============================================================
 *.jks
 *.p8
 *.p12
 *.key
-*.mobileprovision
 *.keystore
-
-# Metro bundler
-.metro-health-check*
-
-# ============================================================
-# BUILD ARTIFACTS
-# ============================================================
-build/
+*.mobileprovision
+*.pem
 *.apk
 *.aab
 *.ipa
 *.app
+build/
 
 # ============================================================
-# LOGS & DEBUG
+# DEPENDENCIES (ROOT)
+# ============================================================
+node_modules/
+
+# ============================================================
+# LOGS
 # ============================================================
 npm-debug.*
 yarn-debug.*
@@ -63,40 +66,21 @@ yarn-error.*
 logs/
 
 # ============================================================
-# EDITORS & IDE
+# EDITORS & OS
 # ============================================================
-
-# macOS
 .DS_Store
 .AppleDouble
-.LSOverride
-
-# Windows
 Thumbs.db
-ehthumbs.db
 Desktop.ini
-
-# Linux
 *~
-
-# VSCode (giữ lại settings chung, bỏ settings cá nhân)
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-!.vscode/launch.json
-
-# JetBrains
 .idea/
 *.iml
 
-# ============================================================
-# TYPESCRIPT
-# ============================================================
-*.tsbuildinfo
+# VSCode — chỉ ignore settings cá nhân, giữ lại settings chung
+mobile/.vscode/launch.json
 
 # ============================================================
 # MISC
 # ============================================================
-*.pem
 app-example
 .turbo/
