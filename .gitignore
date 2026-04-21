@@ -11,29 +11,38 @@
 !.env.example
 
 # ============================================================
-# MOBILE (Expo / React Native)
+# MOBILE (Expo / React Native) — apps/mobile/
 # ============================================================
-mobile/node_modules/
-mobile/.expo/
-mobile/dist/
-mobile/web-build/
-mobile/expo-env.d.ts
-mobile/.kotlin/
-mobile/*.orig.*
-mobile/.metro-health-check*
-mobile/*.tsbuildinfo
-/ios
-/android
-mobile/ios/
-mobile/android/
+apps/mobile/node_modules/
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/expo-env.d.ts
+apps/mobile/.kotlin/
+apps/mobile/*.orig.*
+apps/mobile/.metro-health-check*
+apps/mobile/*.tsbuildinfo
+# Native folders — được tạo tự động khi chạy `npx expo prebuild`
+# Không commit nếu dùng Expo Go / EAS Build (managed workflow)
+apps/mobile/ios/
+apps/mobile/android/
 
 # ============================================================
-# API (Node.js)
+# EAS (Expo Application Services)
 # ============================================================
-api/node_modules/
-api/dist/
-api/*.log
-api/logs/
+# credentials.json chứa keystore/cert — KHÔNG bao giờ commit
+credentials.json
+apps/mobile/credentials.json
+# eas.json có thể commit (không chứa secrets)
+# !apps/mobile/eas.json
+
+# ============================================================
+# SERVER (NestJS) — apps/server/
+# ============================================================
+apps/server/node_modules/
+apps/server/dist/
+apps/server/*.log
+apps/server/logs/
 
 # ============================================================
 # BUILD / NATIVE ARTIFACTS
@@ -52,7 +61,7 @@ api/logs/
 build/
 
 # ============================================================
-# DEPENDENCIES (ROOT)
+# ROOT node_modules
 # ============================================================
 node_modules/
 
@@ -76,8 +85,13 @@ Desktop.ini
 .idea/
 *.iml
 
-# VSCode — chỉ ignore settings cá nhân, giữ lại settings chung
-mobile/.vscode/launch.json
+# VSCode — giữ lại settings chung, ignore cá nhân
+apps/mobile/.vscode/launch.json
+
+# ============================================================
+# DOCKER
+# ============================================================
+# Không cần ignore docker-compose.yml (cần commit)
 
 # ============================================================
 # MISC

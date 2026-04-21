@@ -1,14 +1,27 @@
 {
   "name": "english-learning-app",
   "private": true,
+  "workspaces": [
+    "apps/server",
+    "apps/mobile"
+  ],
   "scripts": {
-    "dev":         "concurrently -n API,MOBILE -c cyan,green \"npm run dev:api\" \"npm run dev:mobile\"",
-    "dev:api":     "cd api && npm run dev",
-    "dev:mobile":  "cd mobile && npx expo start",
-    "install:all": "cd api && npm install && cd ../mobile && npm install",
-    "lint":        "cd mobile && npm run lint"
+    "dev": "concurrently -n SERVER,MOBILE -c cyan,green \"npm run dev:server\" \"npm run dev:mobile\"",
+    "dev:server": "npm run start:dev --workspace=apps/server",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "build:server": "npm run build --workspace=apps/server",
+    "db:up": "docker compose up -d postgres adminer",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres adminer",
+    "install:all": "npm install --workspaces"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "expo": "~55.0.11",
+    "react": "19.2.0",
+    "react-native": "0.83.4"
   }
 }
