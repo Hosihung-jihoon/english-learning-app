@@ -1,4 +1,4 @@
-# 📚 SYSTEM CONTEXT — English Learning App (Monorepo-lite)
+# 📚 SYSTEM CONTEXT — English Learning App (Monorepo)
 > **⚠️ BẮT BUỘC ĐỌC TRƯỚC KHI LÀM VIỆC.**
 > File này là **bộ nhớ duy nhất** của toàn bộ dự án.
 > Mọi phiên làm việc mới (AI hoặc thành viên mới) **phải đọc file này trước tiên**.
@@ -11,17 +11,17 @@
 | Trường | Giá trị |
 |---|---|
 | **Tên dự án** | English Learning App – Team 2 |
-| **Loại** | Full-stack Mobile App (MERN + Expo) |
+| **Loại** | Full-stack Mobile App |
 | **Mục tiêu** | Ứng dụng học tiếng Anh: từ vựng, ngữ pháp, nghe, đọc, quiz |
-| **Nền tảng target** | Android, iOS, Web |
-| **Kiến trúc** | Monorepo-lite (1 repo, 3 folder, không npm workspaces) |
+| **Nền tảng target** | Android (chính), iOS, Web |
+| **Kiến trúc** | Monorepo (npm workspaces) |
 | **Timeline** | 5 tuần — Đồ án môn Lập trình ứng dụng |
 | **Trạng thái** | 🟡 Đang phát triển |
 
 ### Team
 | Vai trò | Trách nhiệm |
 |---|---|
-| Leader | Backend (api/) + Mobile core logic + Kiến trúc |
+| Leader | Backend (apps/server/) + Mobile core logic + Kiến trúc |
 | Member 1 | UI/UX — thiết kế giao diện mobile |
 | Member 2 | Testing — kiểm thử tính năng |
 
@@ -30,34 +30,41 @@
 ## 2. Kiến trúc dự án
 
 ```
-english-learning-app-t2/              ← root repo
+english-learning-app-t2/              ← root repo (npm workspaces)
 │
-├── api/                               # Backend — Node.js + Express + MongoDB
-│   ├── src/
-│   │   ├── routes/                    # Định nghĩa API endpoints
-│   │   ├── controllers/               # Business logic
-│   │   ├── models/                    # Mongoose schemas (DB models)
-│   │   ├── middleware/                # Auth, error handling...
-│   │   └── index.ts                   # Entry point — khởi động server
-│   ├── .env                           # 🔒 SECRET — KHÔNG commit
-│   ├── .env.example                   # ✅ Template an toàn
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── mobile/                            # Frontend — Expo SDK 55
-│   ├── app/                           # Expo Router — màn hình
-│   │   ├── _layout.tsx                # Root layout
-│   │   ├── modal.tsx
-│   │   └── (tabs)/                    # Tab navigation
-│   ├── components/                    # UI components dùng lại
-│   ├── constants/                     # Mobile-only constants
-│   ├── hooks/                         # Custom React hooks
-│   ├── assets/                        # Hình ảnh, font, icon
-│   ├── .env                           # 🔒 SECRET — KHÔNG commit
-│   ├── .env.example                   # ✅ Template an toàn
-│   ├── app.json                       # Expo config
-│   ├── package.json
-│   └── tsconfig.json
+├── apps/
+│   ├── server/                        # Backend — NestJS + Mongoose + MongoDB Atlas
+│   │   ├── src/
+│   │   │   ├── modules/               # Feature modules (auth, lessons, vocab...)
+│   │   │   │   └── <feature>/
+│   │   │   │       ├── <feature>.module.ts
+│   │   │   │       ├── <feature>.controller.ts
+│   │   │   │       ├── <feature>.service.ts
+│   │   │   │       ├── dto/           # Request/Response DTOs
+│   │   │   │       └── entities/      # Mongoose @Schema() definitions
+│   │   │   ├── common/                # Guards, decorators, filters, pipes
+│   │   │   ├── app.module.ts          # Root module
+│   │   │   └── main.ts               # Entry point
+│   │   ├── .env                       # 🔒 SECRET — KHÔNG commit
+│   │   ├── .env.example              # ✅ Template an toàn
+│   │   ├── nest-cli.json
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── mobile/                        # Frontend — Expo SDK 55 (Android)
+│       ├── app/                       # Expo Router — màn hình
+│       │   ├── _layout.tsx            # Root layout
+│       │   ├── modal.tsx
+│       │   └── (tabs)/               # Tab navigation
+│       ├── components/               # UI components dùng lại
+│       ├── constants/                # Mobile-only constants (theme...)
+│       ├── hooks/                    # Custom React hooks
+│       ├── assets/                   # Hình ảnh, font, icon
+│       ├── .env                      # 🔒 SECRET — KHÔNG commit
+│       ├── .env.example             # ✅ Template an toàn
+│       ├── app.json                  # Expo config (package, EAS projectId)
+│       ├── package.json
+│       └── tsconfig.json
 │
 ├── shared/                            # Code dùng chung (không có package.json)
 │   ├── types/
@@ -65,7 +72,8 @@ english-learning-app-t2/              ← root repo
 │   └── constants/
 │       └── index.ts                   # API_ROUTES, ERROR_CODES, APP_CONFIG
 │
-├── package.json                       # Root scripts tiện lợi (không phải workspaces)
+├── docker-compose.yml                 # ⚠️ CHỈ DÙNG KHI DEPLOY VPS — không dùng khi dev
+├── package.json                       # Root — npm workspaces + scripts
 ├── .gitignore
 ├── .antigravityrules                  # Quy tắc làm việc với AI
 ├── system_context.md                  # 📌 FILE NÀY
@@ -76,17 +84,19 @@ english-learning-app-t2/              ← root repo
 
 ## 3. Stack & Dependencies
 
-### Backend (`api/`)
+### Backend (`apps/server/`)
 | Package | Version | Mục đích |
 |---|---|---|
-| `express` | ^4.19 | Web framework |
-| `mongoose` | ^8.4 | MongoDB ODM |
-| `dotenv` | ^16.4 | Biến môi trường |
-| `cors` | ^2.8 | Cross-origin requests |
-| `ts-node-dev` | ^2.0 | Dev server với hot reload |
+| `@nestjs/core` | ^11 | Web framework |
+| `@nestjs/mongoose` | ^11 | Mongoose integration cho NestJS |
+| `mongoose` | ^9 | MongoDB ODM |
+| `@nestjs/config` | ^4 | Biến môi trường |
+| `@nestjs/jwt` | ^11 | JWT Authentication |
+| `class-validator` | ^0.14 | DTO validation decorators |
+| `class-transformer` | ^0.5 | Transform request payloads |
 | `typescript` | ~5.9 | Type safety |
 
-### Frontend (`mobile/`)
+### Frontend (`apps/mobile/`)
 | Package | Version | Mục đích |
 |---|---|---|
 | `expo` | ~55.0.0 | Framework chính |
@@ -98,16 +108,38 @@ english-learning-app-t2/              ← root repo
 
 > **New Architecture** bắt buộc từ Expo SDK 55.
 
+### Database & Infrastructure
+| Công nghệ | Môi trường | Ghi chú |
+|---|---|---|
+| **MongoDB Atlas** | Dev + Production | Cloud — đồng bộ DB giữa thành viên |
+| Docker (MongoDB + MongoExpress) | VPS deploy only | Không dùng khi dev local |
+
 ---
 
-## 4. Quy ước code
+## 4. Thông tin App (KHÔNG tự ý thay đổi)
+
+| Trường | Giá trị |
+|---|---|
+| **App Name** | english-learning-app-t2 |
+| **Slug** | english-learning-app-t2 |
+| **Android Package** | `com.sihung.englishlearningapp` |
+| **EAS Project ID** | `1d0104bc-99e0-40dc-ad06-351b482c486d` |
+| **Scheme (deep link)** | `englishlearningappt2` |
+
+> ⚠️ `android.package` và EAS `projectId` được đặt cố định trong `apps/mobile/app.json`.
+> Thay đổi 2 trường này sẽ làm mất liên kết với EAS cloud và Google Play (nếu đã submit).
+
+---
+
+## 5. Quy ước code
 
 ### Naming
-- **File/folder**: `kebab-case` (`lesson-controller.ts`, `themed-text.tsx`)
+- **File/folder**: `kebab-case` (`lesson.controller.ts`, `themed-text.tsx`)
 - **Component React**: `PascalCase` (`ThemedText`, `LessonCard`)
 - **Hook**: tiền tố `use` (`useColorScheme`, `useLessons`)
 - **Constant tĩnh**: `UPPER_SNAKE_CASE` (`API_ROUTES`, `MAX_RETRIES`)
-- **Mongoose model**: `PascalCase` singular (`Lesson`, `User`)
+- **NestJS class**: `PascalCase` singular (`LessonService`, `AuthGuard`)
+- **Mongoose collection**: plural, snake_case (`lessons`, `vocabulary_items`)
 
 ### TypeScript
 - Luôn dùng strict mode
@@ -126,79 +158,105 @@ if (!res.ok) throw new Error(`HTTP ${res.status}`);
 const data = await res.json();
 ```
 
-### REST API (Backend)
+### REST API (Backend — prefix `/api/v1`)
 ```
-GET    /api/lessons          → lấy danh sách
-GET    /api/lessons/:id      → lấy 1 item
-POST   /api/lessons          → tạo mới
-PUT    /api/lessons/:id      → cập nhật
-DELETE /api/lessons/:id      → xóa
+GET    /api/v1/lessons          → lấy danh sách
+GET    /api/v1/lessons/:id      → lấy 1 item
+POST   /api/v1/lessons          → tạo mới
+PUT    /api/v1/lessons/:id      → cập nhật
+DELETE /api/v1/lessons/:id      → xóa
 ```
 
 ---
 
-## 5. Environment Variables & Secrets
+## 6. Environment Variables & Secrets
 
 | File | Mục đích | Commit? |
 |---|---|---|
-| `api/.env` | Secrets backend (MONGO_URI, JWT_SECRET) | ❌ KHÔNG |
-| `api/.env.example` | Template backend | ✅ CÓ |
-| `mobile/.env` | Secrets mobile (API_BASE_URL) | ❌ KHÔNG |
-| `mobile/.env.example` | Template mobile | ✅ CÓ |
+| `apps/server/.env` | Secrets backend (MONGODB_URI, JWT_SECRET) | ❌ KHÔNG |
+| `apps/server/.env.example` | Template backend | ✅ CÓ |
+| `apps/mobile/.env` | Secrets mobile (API_BASE_URL) | ❌ KHÔNG |
+| `apps/mobile/.env.example` | Template mobile | ✅ CÓ |
+| `credentials.json` | EAS keystore/cert | ❌ KHÔNG |
 
 ### Biến quan trọng
 ```bash
-# api/.env
-MONGO_URI=mongodb+srv://...    # Kết nối MongoDB Atlas
-JWT_SECRET=...                 # Dùng để ký JWT token
-PORT=5000
+# apps/server/.env
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/english_learning
+JWT_SECRET=your-super-secret-key-minimum-32-characters
+JWT_EXPIRES_IN=7d
+PORT=3000
+NODE_ENV=development
+ALLOWED_ORIGINS=*
 
-# mobile/.env
-EXPO_PUBLIC_API_BASE_URL=http://localhost:5000   # URL backend khi dev
+# apps/mobile/.env
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3000   # URL backend khi dev local
 ```
+
+> 💡 **MONGODB_URI** lấy từ MongoDB Atlas Console → Connect → Drivers.
+> Mỗi thành viên tạo account Atlas miễn phí rồi chia sẻ connection string qua kênh riêng (không qua git).
 
 ---
 
-## 6. Getting Started
+## 7. Getting Started
 
 ```bash
 # Clone
 git clone https://github.com/Hosihung-jihoon/english-learning-app.git
-cd english-learning-app
+cd english-learning-app-t2
 
-# Cài root dependencies (concurrently)
-npm install
-
-# Cài dependencies cho từng package
+# Cài tất cả dependencies (root + workspaces)
 npm run install:all
 
 # Tạo file .env từ template
-cp api/.env.example api/.env       # Điền MONGO_URI + JWT_SECRET
-cp mobile/.env.example mobile/.env  # Điền API_BASE_URL
+copy apps\server\.env.example apps\server\.env   # Điền MONGODB_URI + JWT_SECRET
+copy apps\mobile\.env.example apps\mobile\.env   # Điền API_BASE_URL
 
-# Chạy cả API + Mobile cùng lúc
+# Chạy server + mobile cùng lúc
 npm run dev
-# hoặc riêng lẻ:
-npm run dev:api
-npm run dev:mobile
+
+# Hoặc chạy riêng lẻ
+npm run dev:server   # NestJS → http://localhost:3000/api/v1
+npm run dev:mobile   # Expo → scan QR code bằng Expo Go
 ```
 
 ---
 
-## 7. Các module / tính năng
+## 8. Các module / tính năng
 
 | Module | API Route | Mobile Screen | Trạng thái | Người làm |
 |---|---|---|---|---|
-| Authentication | `/api/auth` | `app/(tabs)/` | ⬜ Chưa làm | Leader |
-| Lessons | `/api/lessons` | `app/(tabs)/explore` | ⬜ Chưa làm | Leader |
-| Vocabulary | `/api/vocabulary` | — | ⬜ Chưa làm | Leader |
-| Quiz | `/api/quiz` | — | ⬜ Chưa làm | Leader |
-| Progress | `/api/progress` | — | ⬜ Chưa làm | Leader |
+| Authentication | `/api/v1/auth` | — | ⬜ Chưa làm | Leader |
+| Lessons | `/api/v1/lessons` | `app/(tabs)/explore` | ⬜ Chưa làm | Leader |
+| Vocabulary | `/api/v1/vocabulary` | — | ⬜ Chưa làm | Leader |
+| Quiz | `/api/v1/quiz` | — | ⬜ Chưa làm | Leader |
+| Progress | `/api/v1/progress` | — | ⬜ Chưa làm | Leader |
 | Home UI | — | `app/(tabs)/index` | 🟡 Scaffold | Member 1 |
 
 ---
 
-## 8. Quyết định kiến trúc (ADR)
+## 9. EAS Build
+
+| Trường | Giá trị |
+|---|---|
+| **Project ID** | `1d0104bc-99e0-40dc-ad06-351b482c486d` |
+| **Android package** | `com.sihung.englishlearningapp` |
+| **Build platform** | Android (chính) |
+
+```bash
+# Build APK preview (test nội bộ)
+cd apps/mobile
+eas build --platform android --profile preview
+
+# Build AAB production (Google Play)
+eas build --platform android --profile production
+```
+
+> ⚠️ **`credentials.json`** chứa keystore — KHÔNG BAO GIỜ commit.
+
+---
+
+## 10. Quyết định kiến trúc (ADR)
 
 | # | Quyết định | Lý do | Ngày |
 |---|---|---|---|
@@ -207,18 +265,25 @@ npm run dev:mobile
 | ADR-003 | `StyleSheet.create` + theme tokens | Nhất quán UI | 2026-04-05 |
 | ADR-004 | New Architecture (SDK 55) | Bắt buộc, hiệu năng tốt hơn | 2026-04-05 |
 | ADR-005 | `fetch` thay `axios` | Không thêm dependency, đủ dùng | 2026-04-05 |
-| ADR-006 | Monorepo-lite (không npm workspaces) | 1 leader code, 5 tuần — overhead không đáng | 2026-04-20 |
-| ADR-007 | `shared/` dùng relative import | Đơn giản hơn workspace config, đủ dùng cho scale dự án | 2026-04-20 |
+| ADR-006 | Monorepo (npm workspaces) | Quản lý dependencies tập trung | 2026-04-20 |
+| ADR-007 | `shared/` dùng relative import | Đơn giản hơn workspace config | 2026-04-20 |
+| ADR-008 | NestJS thay Express | Module system, DI, decorator pattern tốt hơn cho scale | 2026-04-20 |
+| ADR-009 | MongoDB Atlas thay PostgreSQL | Cloud-hosted → đồng bộ DB dễ dàng giữa thành viên | 2026-04-21 |
+| ADR-010 | Docker chỉ dùng khi deploy VPS | Tránh overhead cho dev local, Atlas đã lo infrastructure | 2026-04-21 |
+| ADR-011 | EAS Build cho Android | Build APK/AAB không cần máy Mac, CI/CD tích hợp sẵn | 2026-04-22 |
 
 ---
 
-## 9. Lịch sử cập nhật
+## 11. Lịch sử cập nhật
 
 | Ngày | Phiên bản | Thay đổi | Người cập nhật |
 |---|---|---|---|
 | 2026-04-05 | v1.0 | Tạo file ban đầu — Expo SDK 54 scaffold | AI (Antigravity) |
 | 2026-04-05 | v1.1 | Nâng cấp SDK 54 → 55; fetch thay axios | AI (Antigravity) |
-| 2026-04-20 | v2.0 | Restructure sang monorepo-lite: thêm `api/`, `shared/`, di chuyển Expo vào `mobile/` | AI (Antigravity) |
+| 2026-04-20 | v2.0 | Restructure sang monorepo-lite: thêm `api/`, `shared/`, `mobile/` | AI (Antigravity) |
+| 2026-04-20 | v2.1 | Nâng cấp lên monorepo đầy đủ (npm workspaces): `api/` → `apps/server/` (NestJS), `mobile/` → `apps/mobile/` | AI (Antigravity) |
+| 2026-04-21 | v3.0 | Đổi database PostgreSQL → MongoDB Atlas; Docker chỉ dùng khi deploy VPS | AI (Antigravity) |
+| 2026-04-22 | v4.0 | Thêm EAS Build config: Android package `com.sihung.englishlearningapp`, EAS Project ID; cập nhật .gitignore cho credentials | AI (Antigravity) |
 
 ---
 

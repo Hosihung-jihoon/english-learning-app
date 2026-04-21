@@ -1,6 +1,6 @@
 # .antigravityrules
-# Quy tắc làm việc cho AI Antigravity — English Learning App (Monorepo-lite)
-# Cập nhật: 2026-04-20 v2.0
+# Quy tắc làm việc cho AI Antigravity — English Learning App (Monorepo)
+# Cập nhật: 2026-04-22 v4.0
 
 # ============================================================
 # 1. BỘ NHỚ DỰ ÁN — ĐỌC TRƯỚC KHI LÀM BẤT CỨ ĐIỀU GÌ
@@ -11,16 +11,19 @@
 # ============================================================
 # 2. CẤU TRÚC DỰ ÁN — HIỂU RÕ TRƯỚC KHI TẠO FILE
 # ============================================================
-# Repo có 3 package chính:
-#   api/      → Backend Node.js + Express + MongoDB
-#   mobile/   → Frontend Expo SDK 55 + React Native
-#   shared/   → Types + constants dùng chung, KHÔNG có node_modules riêng
+# Repo có cấu trúc monorepo (npm workspaces):
+#   apps/server/   → Backend NestJS + Mongoose + MongoDB Atlas
+#   apps/mobile/   → Frontend Expo SDK 55 + React Native (Android)
+#   shared/        → Types + constants dùng chung, KHÔNG có node_modules riêng
 #
 # Khi tạo file mới, xác định đúng vị trí:
-#   - Mongoose model → api/src/models/
-#   - Express route  → api/src/routes/
-#   - Expo screen    → mobile/app/
-#   - React component → mobile/components/
+#   - NestJS module     → apps/server/src/modules/<feature>/
+#   - Mongoose schema   → apps/server/src/modules/<feature>/entities/<feature>.schema.ts
+#   - NestJS controller → apps/server/src/modules/<feature>/<feature>.controller.ts
+#   - NestJS service    → apps/server/src/modules/<feature>/<feature>.service.ts
+#   - DTO               → apps/server/src/modules/<feature>/dto/
+#   - Expo screen       → apps/mobile/app/
+#   - React component   → apps/mobile/components/
 #   - TypeScript interface → shared/types/index.ts
 #   - API route constant  → shared/constants/index.ts
 
@@ -32,10 +35,11 @@
 # - KIỂM TRA .gitignore đã có entry
 # - KHÔNG BAO GIỜ hardcode API key, password, token trong code
 # - KHÔNG BAO GIỜ commit file .env thật
+# - KHÔNG BAO GIỜ commit credentials.json (EAS keystore)
 #
 # Secrets của từng package:
-#   api/.env     → MONGO_URI, JWT_SECRET, PORT
-#   mobile/.env  → EXPO_PUBLIC_API_BASE_URL
+#   apps/server/.env  → MONGODB_URI, JWT_SECRET, PORT
+#   apps/mobile/.env  → EXPO_PUBLIC_API_BASE_URL
 #
 # Khi thêm biến môi trường mới:
 #   1. Thêm vào .env (giá trị thật)
@@ -54,32 +58,43 @@
 #   - Đọc file có vấn đề trước
 #   - Sửa pinpoint, không refactor toàn bộ trừ khi được yêu cầu
 #
-# Khi tạo Mongoose model mới:
+# Khi tạo Mongoose schema mới:
 #   - Luôn import type từ shared/types thay vì định nghĩa lại
 
 # ============================================================
-# 5. LOGIC CỐT LÕI — BACKEND (api/)
+# 5. LOGIC CỐT LÕI — BACKEND (apps/server/)
 # ============================================================
-# Stack bắt buộc: Express + Mongoose + TypeScript
-# Pattern chuẩn cho controller:
-#   try { ... res.json({ success: true, data }) }
-#   catch(err) { res.status(500).json({ success: false, message: err.message }) }
+# Stack bắt buộc: NestJS + Mongoose + MongoDB Atlas + TypeScript
 #
-# REST conventions:
-#   GET    /api/<resource>      → list all
-#   GET    /api/<resource>/:id  → get one
-#   POST   /api/<resource>      → create
-#   PUT    /api/<resource>/:id  → update
-#   DELETE /api/<resource>/:id  → delete
+# Pattern chuẩn cho một NestJS module (feature-based):
+#   apps/server/src/modules/<feature>/
+#   ├── <feature>.module.ts
+#   ├── <feature>.controller.ts
+#   ├── <feature>.service.ts
+#   ├── dto/
+#   │   ├── create-<feature>.dto.ts
+#   │   └── update-<feature>.dto.ts
+#   └── entities/
+#       └── <feature>.schema.ts    ← Mongoose @Schema()
+#
+# DTO: luôn dùng class-validator decorators (@IsString, @IsNotEmpty...)
+# Schema: dùng @Schema() + @Prop() từ @nestjs/mongoose
+#
+# REST conventions (prefix /api/v1):
+#   GET    /api/v1/<resource>      → list all
+#   GET    /api/v1/<resource>/:id  → get one
+#   POST   /api/v1/<resource>      → create
+#   PUT    /api/v1/<resource>/:id  → update
+#   DELETE /api/v1/<resource>/:id  → delete
 #
 # Auth: JWT Bearer token trong header
 #   Authorization: Bearer <token>
 #
-# Mongoose: KHÔNG dùng .findById().exec() — dùng await trực tiếp
-# KHÔNG dùng callbacks — luôn dùng async/await
+# Mongoose: KHÔNG dùng callbacks — luôn dùng async/await
+# KHÔNG dùng .exec() — await trực tiếp InjectModel
 
 # ============================================================
-# 6. LOGIC CỐT LÕI — MOBILE (mobile/)
+# 6. LOGIC CỐT LÕI — MOBILE (apps/mobile/)
 # ============================================================
 # Stack bắt buộc (KHÔNG thay thế):
 #   - Expo SDK ~55.0.0
@@ -87,6 +102,11 @@
 #   - fetch native — KHÔNG cài axios
 #   - StyleSheet.create + constants/theme.ts
 #   - TypeScript strict
+#
+# Thông tin app cố định (KHÔNG tự ý thay đổi):
+#   - Android package: com.sihung.englishlearningapp
+#   - EAS Project ID:  1d0104bc-99e0-40dc-ad06-351b482c486d
+#   - App slug:        english-learning-app-t2
 #
 # HTTP client pattern chuẩn:
 #   import { API_ROUTES } from '../../shared/constants';
@@ -98,7 +118,7 @@
 #   Components: PascalCase
 #   Files: kebab-case
 #   Hooks: tiền tố 'use'
-#   Màn hình mới: tạo file trong mobile/app/
+#   Màn hình mới: tạo file trong apps/mobile/app/
 
 # ============================================================
 # 7. SHARED TYPES & CONSTANTS
@@ -106,36 +126,69 @@
 # shared/types/index.ts chứa tất cả interfaces: User, Lesson, Vocabulary, Quiz...
 # shared/constants/index.ts chứa: API_ROUTES, ERROR_CODES, APP_CONFIG
 #
-# Import trong api/:
-#   import type { Lesson } from '../../shared/types';
-#   import { API_ROUTES } from '../../shared/constants';
+# Import trong apps/server/:
+#   import type { Lesson } from '../../../shared/types';
+#   import { API_ROUTES } from '../../../shared/constants';
 #
-# Import trong mobile/:
+# Import trong apps/mobile/:
 #   import type { Lesson } from '../../shared/types';
 #   import { API_ROUTES } from '../../shared/constants';
 #
 # KHÔNG định nghĩa lại type đã có trong shared/ ở các package con.
 
 # ============================================================
-# 8. GIT & WORKFLOW
+# 8. DATABASE — MONGODB ATLAS
+# ============================================================
+# Dự án dùng MongoDB Atlas (cloud) — KHÔNG dùng local MongoDB hay PostgreSQL.
+# Lý do: dễ đồng bộ database giữa các thành viên trong team.
+#
+# Kết nối: MONGODB_URI trong apps/server/.env
+# Format: mongodb+srv://<user>:<pass>@cluster.mongodb.net/<dbname>
+#
+# KHÔNG dùng Docker để chạy database ở môi trường dev.
+# docker-compose.yml chỉ dùng khi deploy lên VPS (production).
+#
+# Naming convention MongoDB:
+#   Collection: plural, snake_case (users, lessons, vocabulary_items)
+#   Document ID: _id (ObjectId mặc định của Mongoose)
+
+# ============================================================
+# 9. EAS BUILD (Expo Application Services)
+# ============================================================
+# EAS được cấu hình để build APK/AAB cho Android.
+# EAS Project ID: 1d0104bc-99e0-40dc-ad06-351b482c486d (trong app.json)
+# Android package name: com.sihung.englishlearningapp (trong app.json)
+#
+# KHÔNG commit:
+#   - credentials.json (keystore/cert)
+#   - apps/mobile/android/ (generated by prebuild)
+#   - apps/mobile/ios/ (generated by prebuild)
+#
+# Khi cần build APK:
+#   cd apps/mobile
+#   eas build --platform android --profile preview
+
+# ============================================================
+# 10. GIT & WORKFLOW
 # ============================================================
 # Commit message: <type>(<scope>): <subject>
 # type: feat | fix | docs | style | refactor | test | chore
-# scope: api | mobile | shared | root
+# scope: server | mobile | shared | root
 #
 # Ví dụ:
-#   feat(api): add lesson CRUD endpoints
+#   feat(server): add lesson CRUD endpoints
 #   feat(mobile): add vocabulary flashcard screen
-#   fix(api): handle mongoose connection error
+#   fix(server): handle mongoose connection error
 #   docs(root): update system_context.md module status
 #
 # Quy tắc trước khi tạo PR/commit lớn:
-#   - cd mobile && npm run lint
+#   - cd apps/mobile && npm run lint
 #   - Không có file .env thật trong staged changes
+#   - Không có credentials.json trong staged changes
 #   - Cập nhật system_context.md nếu có thay đổi kiến trúc
 
 # ============================================================
-# 9. PHẢN HỒI & REVIEW
+# 11. PHẢN HỒI & REVIEW
 # ============================================================
 # Khi không chắc về yêu cầu → hỏi lại, không đoán
 # Khi đề xuất thay đổi lớn (thêm package, đổi kiến trúc) → trình bày lý do, chờ approve
