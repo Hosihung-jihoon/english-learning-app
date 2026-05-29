@@ -27,27 +27,18 @@ export const Colors = {
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
+const baseFont = Platform.select({
+  web: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  default: 'System',
 });
+
+export const Fonts = {
+  regular: baseFont,
+  medium: baseFont,
+  semiBold: baseFont,
+  bold: baseFont,
+  sans: baseFont,
+  serif: Platform.select({ web: "Georgia, 'Times New Roman', serif", default: 'serif' }) || 'serif',
+  rounded: Platform.select({ web: "'SF Pro Rounded', sans-serif", default: 'System' }) || 'System',
+  mono: Platform.select({ web: "monospace", default: 'monospace' }) || 'monospace',
+};

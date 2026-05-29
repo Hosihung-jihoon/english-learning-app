@@ -98,3 +98,4 @@ apps/mobile/.vscode/launch.json
 # ============================================================
 app-example
 .turbo/
+plugin/
