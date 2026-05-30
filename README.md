@@ -70,6 +70,9 @@ copy apps\mobile\.env.example apps\mobile\.env
 EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
 ```
 
+> Với **Expo Go trên điện thoại thật**, `localhost` sẽ trỏ về chính điện thoại. Hãy đổi sang IP LAN của máy đang chạy NestJS, ví dụ `http://192.168.1.78:3000`.
+> Không dùng `https://` cho server dev hiện tại vì backend chỉ mở `http://`.
+
 ### 4. Chạy ứng dụng
 
 ```bash

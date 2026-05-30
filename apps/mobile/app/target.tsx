@@ -15,6 +15,7 @@ export default function TargetInfoScreen() {
   const [target, setTarget] = useState<TargetContent | null>(null);
   const [courses, setCourses] = useState<CourseContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !type) {
@@ -32,6 +33,10 @@ export default function TargetInfoScreen() {
         }
         setTarget(targetData);
         setCourses(courseList.filter((course) => targetData.courseIds.includes(course.id)));
+      } catch (loadError) {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được mục tiêu');
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -47,10 +52,18 @@ export default function TargetInfoScreen() {
 
   const firstCourse = useMemo(() => courses[0], [courses]);
 
-  if (loading || !target) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!target) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được mục tiêu.'}</Text>
       </SafeAreaView>
     );
   }
@@ -175,6 +188,7 @@ export default function TargetInfoScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   container: { flex: 1, backgroundColor: '#faf8f8' },
   header: {
     paddingHorizontal: 24,

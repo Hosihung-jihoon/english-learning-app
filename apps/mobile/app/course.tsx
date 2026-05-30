@@ -15,6 +15,7 @@ export default function CourseInfoScreen() {
   const [course, setCourse] = useState<CourseContent | null>(null);
   const [lessons, setLessons] = useState<LessonContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !courseId) {
@@ -35,6 +36,10 @@ export default function CourseInfoScreen() {
         }
         setCourse(courseData);
         setLessons(lessonList);
+      } catch (loadError) {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được khóa học');
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -48,10 +53,18 @@ export default function CourseInfoScreen() {
     };
   }, [token, courseId]);
 
-  if (loading || !course) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!course) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được khóa học.'}</Text>
       </SafeAreaView>
     );
   }
@@ -191,6 +204,7 @@ export default function CourseInfoScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   container: { flex: 1, backgroundColor: '#faf8f8' },
   header: { paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },

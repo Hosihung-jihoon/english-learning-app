@@ -1,9 +1,26 @@
 import { Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
 import React from 'react';
+import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { HapticTab } from '@/components/haptic-tab';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function TabLayout() {
+  const { isLoading, token } = useAuth();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!token) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -62,3 +79,12 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#faf8f8',
+  },
+});

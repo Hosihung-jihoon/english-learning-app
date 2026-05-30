@@ -12,6 +12,7 @@ export default function AssessmentScreen() {
   const { targetType } = useLocalSearchParams<{ targetType?: string }>();
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -32,6 +33,11 @@ export default function AssessmentScreen() {
           setAssessment(data);
         }
       })
+      .catch((loadError) => {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được bài đánh giá');
+        }
+      })
       .finally(() => {
         if (mounted) {
           setLoading(false);
@@ -43,10 +49,18 @@ export default function AssessmentScreen() {
     };
   }, [token, targetType]);
 
-  if (loading || !assessment) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!assessment) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được bài đánh giá.'}</Text>
       </SafeAreaView>
     );
   }
@@ -140,6 +154,7 @@ export default function AssessmentScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   container: { flex: 1, padding: 24 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },

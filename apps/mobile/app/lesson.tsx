@@ -15,6 +15,7 @@ export default function LessonInfoScreen() {
   const [vocabulary, setVocabulary] = useState<Flashcard[]>([]);
   const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'Lý thuyết' | 'Hướng dẫn'>('Lý thuyết');
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,6 +46,10 @@ export default function LessonInfoScreen() {
         setVocabulary(vocabularyData);
         setQuiz(quizData);
         await markLessonAccess(accessToken, { courseId: lessonData.courseId, lessonId: lessonData.id });
+      } catch (loadError) {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được bài học');
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -121,10 +126,18 @@ export default function LessonInfoScreen() {
     setChecked(false);
   };
 
-  if (loading || !lesson) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!lesson) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được bài học.'}</Text>
       </SafeAreaView>
     );
   }
@@ -305,6 +318,7 @@ export default function LessonInfoScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   container: { flex: 1, backgroundColor: '#faf8f8' },
   header: { paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
