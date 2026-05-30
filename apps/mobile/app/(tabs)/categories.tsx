@@ -32,6 +32,7 @@ export default function CategoriesScreen() {
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
       return;
     }
 

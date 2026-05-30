@@ -11,6 +11,7 @@ export default function CertificateScreen() {
   const { token } = useAuth();
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -22,6 +23,11 @@ export default function CertificateScreen() {
       .then((data) => {
         if (mounted) {
           setProfile(data);
+        }
+      })
+      .catch((loadError) => {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được chứng nhận');
         }
       })
       .finally(() => {
@@ -37,10 +43,18 @@ export default function CertificateScreen() {
 
   const unlocked = useMemo(() => profile?.certificates.filter((item) => item.unlocked) ?? [], [profile]);
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được chứng nhận.'}</Text>
       </SafeAreaView>
     );
   }
@@ -78,6 +92,7 @@ export default function CertificateScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24 },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   iconText: { fontSize: 20, color: '#050018' },

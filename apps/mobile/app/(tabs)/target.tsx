@@ -17,6 +17,7 @@ export default function TargetSelectionScreen() {
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
       return;
     }
 

@@ -20,6 +20,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
+      setError('Phiên đăng nhập đã hết hạn.');
       return;
     }
     const accessToken = token;

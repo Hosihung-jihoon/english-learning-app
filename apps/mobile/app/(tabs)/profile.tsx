@@ -14,9 +14,12 @@ export default function ProfileScreen() {
   const [activeSegment, setActiveSegment] = useState<'progress' | 'achievements'>('progress');
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
+      setError('Phiên đăng nhập đã hết hạn.');
       return;
     }
 
@@ -25,6 +28,11 @@ export default function ProfileScreen() {
       .then((data) => {
         if (mounted) {
           setProfile(data);
+        }
+      })
+      .catch((loadError) => {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được hồ sơ');
         }
       })
       .finally(() => {
@@ -38,10 +46,18 @@ export default function ProfileScreen() {
     };
   }, [token]);
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#00bd50" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={styles.errorText}>{error || 'Không tải được hồ sơ.'}</Text>
       </SafeAreaView>
     );
   }
@@ -178,6 +194,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
   container: { flex: 1, backgroundColor: '#faf8f8' },
   scrollContent: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
   userCard: { backgroundColor: '#ffffff', borderRadius: 24, padding: 20, marginBottom: 24 },

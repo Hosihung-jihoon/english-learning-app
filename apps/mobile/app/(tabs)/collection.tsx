@@ -20,6 +20,7 @@ export default function CollectionScreen() {
 
   useEffect(() => {
     if (!token) {
+      setLoading(false);
       return;
     }
     const accessToken = token;
