@@ -1,8 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Redirect } from 'expo-router';
 import React from 'react';
-import { ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, Image, SafeAreaView, StyleSheet } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -27,53 +26,57 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#00bd50',
-        tabBarInactiveTintColor: '#545454',
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: '#ffffff',
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: '#00bd50',
           borderTopWidth: 0,
-          height: 84,
-          paddingTop: 10,
-          paddingBottom: 20,
+          height: 72,
+          paddingTop: 0,
+          paddingBottom: 0,
+          borderTopLeftRadius: 36,
+          borderTopRightRadius: 36,
+          position: 'absolute',
+          overflow: 'hidden',
           elevation: 0,
-          shadowOpacity: 0.08,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0,
+          shadowRadius: 0,
+          shadowOffset: { width: 0, height: 0 },
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="home" color={color} />,
+          tabBarIcon: () => <Image source={require('../../assets/images/tab-home.png')} style={styles.tabIcon} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="target"
         options={{
           title: 'Target',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="flag" color={color} />,
+          tabBarIcon: () => <Image source={require('../../assets/images/tab-target.png')} style={styles.tabIcon} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="collection"
         options={{
           title: 'Collection',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="clipboard" color={color} />,
+          tabBarIcon: () => <Image source={require('../../assets/images/tab-collection.png')} style={styles.tabIcon} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: 'Categories',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="grid" color={color} />,
+          tabBarIcon: () => <Image source={require('../../assets/images/tab-categories.png')} style={styles.tabIcon} resizeMode="contain" />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <Ionicons size={24} name="person" color={color} />,
+          tabBarIcon: () => <Image source={require('../../assets/images/tab-profile.png')} style={styles.tabIcon} resizeMode="contain" />,
         }}
       />
     </Tabs>
@@ -86,5 +89,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#faf8f8',
+  },
+  tabIcon: {
+    width: 24,
+    height: 24,
   },
 });

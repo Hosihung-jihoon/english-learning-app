@@ -17,7 +17,7 @@ export default function OnboardingStepOne() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/sign-in')}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/sign-up')}>
             <Ionicons name="chevron-back" size={24} color="#504D5D" />
           </TouchableOpacity>
           <View style={styles.progressTrack}>

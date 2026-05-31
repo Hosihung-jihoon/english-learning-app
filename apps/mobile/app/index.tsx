@@ -14,7 +14,7 @@ export default function AppEntry() {
   }
 
   if (!onboardingComplete) {
-    return <Redirect href="/(auth)/onboarding-step-1" />;
+    return <Redirect href="/(auth)/onboarding-intro-1" />;
   }
 
   if (!token) {
