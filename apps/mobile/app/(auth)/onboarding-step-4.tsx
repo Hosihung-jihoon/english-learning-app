@@ -4,11 +4,9 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/constants/theme';
 import { onboardingOptions } from '@/data/onboarding-options';
-import { useAuth } from '@/providers/auth-provider';
 
 export default function OnboardingStepFour() {
   const router = useRouter();
-  const { completeOnboarding } = useAuth();
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
 
   return (
@@ -53,10 +51,7 @@ export default function OnboardingStepFour() {
         <TouchableOpacity
           style={[styles.primaryButton, !selectedMode && styles.primaryButtonDisabled]}
           disabled={!selectedMode}
-          onPress={async () => {
-            await completeOnboarding();
-            router.replace('/(auth)/sign-in');
-          }}>
+          onPress={() => router.replace('/(tabs)')}>
           <Text style={[styles.primaryButtonText, !selectedMode && styles.primaryButtonTextDisabled]}>Bắt đầu</Text>
         </TouchableOpacity>
       </View>

@@ -67,7 +67,10 @@ export default function TargetSelectionScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
           <Text style={styles.title}>Chọn mục tiêu</Text>
           <Text style={styles.subtitle}>
             Lựa chọn mục tiêu phù hợp với bạn, SUMO sẽ giúp bạn đi đúng nhịp học ngay từ đầu.
@@ -102,14 +105,13 @@ export default function TargetSelectionScreen() {
               </TouchableOpacity>
             );
           })}
-          <View style={{ height: 120 }} />
         </ScrollView>
 
         <View style={styles.bottomBar}>
           <TouchableOpacity
             style={styles.primaryButton}
             activeOpacity={0.88}
-            onPress={() => router.push({ pathname: '/target', params: { type: selectedTarget } })}>
+            onPress={() => router.push({ pathname: '/target-detail', params: { type: selectedTarget } })}>
             <Text style={styles.primaryButtonText}>Chọn mục tiêu</Text>
           </TouchableOpacity>
         </View>
@@ -138,6 +140,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: { fontFamily: Fonts.bold, fontSize: 20, color: '#050018' },
+  scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 8 },
   title: { fontFamily: Fonts.bold, fontSize: 32, color: '#050018', marginBottom: 8 },
   subtitle: { fontFamily: Fonts.regular, fontSize: 14, color: '#373346', lineHeight: 21, marginBottom: 28 },
@@ -169,7 +172,14 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: Fonts.bold, fontSize: 18, color: '#130031', marginBottom: 6 },
   cardDescription: { fontFamily: Fonts.regular, fontSize: 12, color: '#6c5f80', lineHeight: 17, marginBottom: 8 },
   cardMeta: { fontFamily: Fonts.medium, fontSize: 12, color: '#6124c4' },
-  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 24, paddingBottom: 40, backgroundColor: '#faf8f8' },
+  bottomBar: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#faf8f8',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ece7f0',
+  },
   primaryButton: {
     backgroundColor: '#00bd50',
     borderRadius: 999,
