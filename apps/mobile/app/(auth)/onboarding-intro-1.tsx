@@ -1,64 +1,50 @@
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRef } from 'react';
+import { ImageBackground, PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Fonts } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const background = require('../../assets/images/figma-onboarding-intro-1.png');
+
+const SWIPE_THRESHOLD = 60;
 
 export default function OnboardingIntroOne() {
   const router = useRouter();
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          router.replace('/(auth)/onboarding-intro-2');
+        }
+      },
+    }),
+  ).current;
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <StatusBar style="dark" backgroundColor="#faf8f8" />
-      <View style={styles.container}>
-        <View style={styles.pagination}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+      <ImageBackground source={background} style={styles.background} resizeMode="stretch">
+        <View style={styles.overlay} {...panResponder.panHandlers}>
+          <TouchableOpacity style={styles.primaryButtonHitbox} onPress={() => router.replace('/(auth)/onboarding-intro-2')} />
         </View>
-
-        <View style={styles.hero}>
-          <Image source={require('../../assets/images/menu_illustration.png')} style={styles.image} resizeMode="contain" />
-        </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title}>Lộ trình linh hoạt</Text>
-          <Text style={styles.description}>
-            Cung cấp những nội dung học riêng cho mỗi mục tiêu khác nhau để giúp bạn đạt được thành quả tốt nhất.
-          </Text>
-        </View>
-
-        <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/(auth)/onboarding-intro-2')}>
-          <Text style={styles.primaryButtonText}>Tiếp tục</Text>
-        </TouchableOpacity>
-      </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#faf8f8' },
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 },
-  pagination: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 24 },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#d8d7de' },
-  dotActive: { width: 44, backgroundColor: '#55ba5d' },
-  hero: {
-    flex: 1,
-    minHeight: 320,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#eef9f0',
-    borderRadius: 32,
+  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  background: { flex: 1, backgroundColor: '#ffffff' },
+  overlay: { flex: 1 },
+  primaryButtonHitbox: {
+    position: 'absolute',
+    left: '6.3%',
+    right: '6.3%',
+    bottom: '4.5%',
+    height: '6.1%',
   },
-  image: { width: '78%', height: '78%' },
-  content: { paddingTop: 32, paddingHorizontal: 8 },
-  title: { fontFamily: Fonts.bold, fontSize: 34, lineHeight: 42, color: '#050018', textAlign: 'center', marginBottom: 16 },
-  description: { fontFamily: Fonts.regular, fontSize: 16, lineHeight: 24, color: '#5c596a', textAlign: 'center' },
-  primaryButton: {
-    marginTop: 32,
-    backgroundColor: '#55ba5d',
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: { fontFamily: Fonts.bold, fontSize: 16, color: '#ffffff' },
 });

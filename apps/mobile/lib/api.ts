@@ -28,6 +28,20 @@ export function getApiBaseUrl() {
   return baseUrl;
 }
 
+function extractErrorMessage(text: string, fallbackMessage: string) {
+  if (!text) {
+    return fallbackMessage;
+  }
+
+  try {
+    const data = JSON.parse(text) as { message?: string | string[] };
+    const message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+    return message || fallbackMessage;
+  } catch {
+    return text || fallbackMessage;
+  }
+}
+
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
@@ -62,13 +76,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     if (!response.ok) {
       const fallbackMessage = `HTTP ${response.status}`;
       const text = await response.text();
-      try {
-        const data = JSON.parse(text) as { message?: string | string[] };
-        const message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
-        throw new Error(message || fallbackMessage);
-      } catch {
-        throw new Error(text || fallbackMessage);
-      }
+      throw new Error(extractErrorMessage(text, fallbackMessage));
     }
 
     if (response.status === 204) {

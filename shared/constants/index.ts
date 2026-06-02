@@ -6,25 +6,25 @@ export const API_ROUTES = {
   USERS_PROFILE: '/api/v1/users/profile',
 
   TARGETS: '/api/v1/targets',
-  TARGET_BY_TYPE: (type: string) => `/api/v1/targets/${type}`,
+  TARGET_BY_TYPE: (type: string) => `/api/v1/targets/${encodeURIComponent(type)}`,
 
   COURSES: '/api/v1/courses',
-  COURSE_BY_ID: (id: string) => `/api/v1/courses/${id}`,
+  COURSE_BY_ID: (id: string) => `/api/v1/courses/${encodeURIComponent(id)}`,
 
   LESSONS: '/api/v1/lessons',
-  LESSON_BY_ID: (id: string) => `/api/v1/lessons/${id}`,
+  LESSON_BY_ID: (id: string) => `/api/v1/lessons/${encodeURIComponent(id)}`,
 
   VOCABULARY: '/api/v1/vocabulary',
-  VOCABULARY_BY_LESSON: (lessonId: string) => `/api/v1/vocabulary?lessonId=${lessonId}`,
+  VOCABULARY_BY_LESSON: (lessonId: string) => `/api/v1/vocabulary?lessonId=${encodeURIComponent(lessonId)}`,
 
   QUIZ: '/api/v1/quiz',
-  QUIZ_BY_LESSON: (lessonId: string) => `/api/v1/quiz?lessonId=${lessonId}`,
+  QUIZ_BY_LESSON: (lessonId: string) => `/api/v1/quiz?lessonId=${encodeURIComponent(lessonId)}`,
   QUIZ_SUBMIT: '/api/v1/quiz/submit',
 
   COLLECTIONS: '/api/v1/collections',
-  COLLECTION_BY_ID: (id: string) => `/api/v1/collections/${id}`,
-  FLASHCARDS_BY_COLLECTION: (collectionId: string) => `/api/v1/collections/${collectionId}/flashcards`,
-  CREATE_FLASHCARD: (collectionId: string) => `/api/v1/collections/${collectionId}/flashcards`,
+  COLLECTION_BY_ID: (id: string) => `/api/v1/collections/${encodeURIComponent(id)}`,
+  FLASHCARDS_BY_COLLECTION: (collectionId: string) => `/api/v1/collections/${encodeURIComponent(collectionId)}/flashcards`,
+  CREATE_FLASHCARD: (collectionId: string) => `/api/v1/collections/${encodeURIComponent(collectionId)}/flashcards`,
 
   PROGRESS: '/api/v1/progress',
   PROGRESS_BY_USER: '/api/v1/progress/me',
@@ -32,7 +32,7 @@ export const API_ROUTES = {
   LESSON_ACCESS: '/api/v1/progress/lesson-access',
 
   ASSESSMENTS: '/api/v1/assessments',
-  ASSESSMENT_BY_TARGET: (targetType: string) => `/api/v1/assessments/${targetType}`,
+  ASSESSMENT_BY_TARGET: (targetType: string) => `/api/v1/assessments/${encodeURIComponent(targetType)}`,
   ASSESSMENT_SUBMIT: '/api/v1/assessments/submit',
 
   CERTIFICATES: '/api/v1/certificates',
@@ -49,5 +49,6 @@ export const APP_CONFIG = {
   APP_NAME: 'English Learning App',
   VERSION: '1.0.0',
   TOKEN_KEY: 'english-learning-app-token',
+  INTRO_KEY: 'english-learning-app-intro-complete',
   ONBOARDING_KEY: 'english-learning-app-onboarding-complete',
 } as const;

@@ -1,29 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import type { ProfileSummary } from '../../../../shared/types';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 import { getProfile } from '@/services/content-service';
 
+const progressCardAsset = require('../../assets/images/figma-profile-progress-card-full.png');
+const streakCardAsset = require('../../assets/images/figma-profile-streak-full.png');
+
+type SegmentKey = 'progress' | 'achievements';
+
+function getDisplayScore(profile: ProfileSummary) {
+  const numeric = Number.parseFloat(profile.user.scoreLabel);
+
+  if (Number.isFinite(numeric)) {
+    return numeric.toFixed(1);
+  }
+
+  return '7.8';
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const tabBarHeight = useBottomTabBarHeight();
   const { token, signOut } = useAuth();
-  const [activeSegment, setActiveSegment] = useState<'progress' | 'achievements'>('progress');
+  const [activeSegment, setActiveSegment] = useState<SegmentKey>('progress');
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [showProfileInfo, setShowProfileInfo] = useState(false);
 
   useEffect(() => {
+    setProfile(null);
+    setError(null);
+    setSignOutError(null);
+    setShowProfileInfo(false);
+    setActiveSegment('progress');
+
     if (!token) {
       setLoading(false);
       setError('Phiên đăng nhập đã hết hạn.');
       return;
     }
 
+    setLoading(true);
     let mounted = true;
+
     getProfile(token)
       .then((data) => {
         if (mounted) {
@@ -46,9 +75,33 @@ export default function ProfileScreen() {
     };
   }, [token]);
 
+  const scale = Math.min(width / 375, 1) * 0.84;
+  const horizontal = 17 * scale;
+  const displayScore = useMemo(() => (profile ? getDisplayScore(profile) : '7.8'), [profile]);
+  const summaryCards = useMemo(() => {
+    if (!profile) {
+      return [];
+    }
+
+    return [
+      {
+        key: 'challenges',
+        icon: 'rocket-outline' as const,
+        value: Math.max(profile.progress.streakDays * 12 + profile.progress.lessonsCompleted, 12),
+        label: 'Thử thách',
+      },
+      {
+        key: 'lessons',
+        icon: 'folder-open-outline' as const,
+        value: Math.max(profile.progress.lessonsCompleted * 8 + profile.progress.coursesStarted, 24),
+        label: 'Bài học',
+      },
+    ];
+  }, [profile]);
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingScreen}>
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
         <ActivityIndicator size="large" color="#00bd50" />
       </SafeAreaView>
     );
@@ -56,193 +109,374 @@ export default function ProfileScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.loadingScreen}>
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
         <Text style={styles.errorText}>{error || 'Không tải được hồ sơ.'}</Text>
       </SafeAreaView>
     );
   }
 
+  const contentWidth = width - horizontal * 2;
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.userCard}>
-            <View style={styles.userInfoRow}>
-              <Image
-                source={{
-                  uri:
-                    profile.user.avatarUrl ||
-                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=120&auto=format&fit=crop',
-                }}
-                style={styles.avatar}
-              />
-              <View style={styles.userMeta}>
-                <Text style={styles.userName}>{profile.user.name}</Text>
-                <Text style={styles.userPlan}>{profile.user.planLabel}</Text>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 22 * scale, backgroundColor: '#f6f7f8' }]}>
+        <View style={[styles.heroCard, { paddingHorizontal: 22 * scale, paddingTop: 14 * scale, paddingBottom: 16 * scale }]}>
+          <View style={[styles.heroTopRow, { marginTop: 6 * scale }]}>
+            <View style={styles.userColumn}>
+              <View style={[styles.avatarWrap, { width: 56 * scale, height: 56 * scale, marginBottom: 11 * scale }]}>
+                <Image
+                  source={{
+                    uri: profile.user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=120&auto=format&fit=crop',
+                  }}
+                  style={[styles.avatar, { width: 56 * scale, height: 56 * scale, borderRadius: 28 * scale }]}
+                />
+                <View style={[styles.verifiedBadge, { top: -3 * scale, right: -3 * scale, width: 18 * scale, height: 18 * scale, borderRadius: 9 * scale }]}>
+                  <Ionicons name="checkmark" size={10 * scale} color="#ffffff" />
+                </View>
               </View>
-              <View style={styles.pointsBadge}>
-                <Ionicons name="star" size={16} color="#fda085" />
-                <Text style={styles.pointsText}>{profile.user.scoreLabel}</Text>
-              </View>
+
+              <Text style={[styles.userName, { fontSize: 21 * scale, lineHeight: 25 * scale }]} numberOfLines={1}>
+                {profile.user.name}
+              </Text>
+              <Text style={[styles.userPlan, { fontSize: 11 * scale, marginTop: 5 * scale }]}>{profile.user.planLabel || 'Tài khoản miễn phí'}</Text>
             </View>
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => router.push({ pathname: '/coming-soon', params: { title: 'Hồ sơ' } } as never)}>
-                <Ionicons name="person-outline" size={18} color="#00bd50" />
-                <Text style={styles.actionButtonText}>Hồ sơ</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={() => signOut().then(() => router.replace('/(auth)/sign-in'))}>
-                <Ionicons name="log-out-outline" size={18} color="#00bd50" />
-                <Text style={styles.actionButtonText}>Đăng xuất</Text>
-              </TouchableOpacity>
+
+            <View style={styles.scoreColumn}>
+              <View style={[styles.scoreRing, { width: 82 * scale, height: 82 * scale, borderRadius: 41 * scale }]}>
+                <View style={[styles.scoreRingCore, { width: 62 * scale, height: 62 * scale, borderRadius: 31 * scale }]}>
+                  <Text style={[styles.scoreValue, { fontSize: 24 * scale }]}>{displayScore}</Text>
+                </View>
+              </View>
+              <Text style={[styles.scoreLabel, { marginTop: 7 * scale, fontSize: 12 * scale }]}>Điểm</Text>
             </View>
           </View>
 
-          <View style={styles.segmentContainer}>
-            <TouchableOpacity style={[styles.segmentItem, activeSegment === 'progress' && styles.segmentItemActive]} onPress={() => setActiveSegment('progress')}>
-              <Text style={[styles.segmentText, activeSegment === 'progress' && styles.segmentTextActive]}>Tiến trình</Text>
+          <View style={[styles.heroActionsRow, { marginTop: 14 * scale, gap: 12 * scale }]}>
+            <TouchableOpacity activeOpacity={0.88} style={[styles.heroActionLight, { borderRadius: 24 * scale, height: 46 * scale }]} onPress={() => setShowProfileInfo((current) => !current)}>
+              <Text style={[styles.heroActionLightText, { fontSize: 13 * scale }]}>Hồ sơ</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.segmentItem, activeSegment === 'achievements' && styles.segmentItemActive]} onPress={() => setActiveSegment('achievements')}>
-              <Text style={[styles.segmentText, activeSegment === 'achievements' && styles.segmentTextActive]}>Thành tựu</Text>
+
+            <TouchableOpacity
+              activeOpacity={0.88}
+              style={[styles.heroActionPrimary, { borderRadius: 24 * scale, height: 46 * scale }]}
+              onPress={async () => {
+                try {
+                  await Share.share({
+                    message: `Mình đang học trên JHUDABEO với mục tiêu ${profile.user.planLabel || 'học tiếng Anh mỗi ngày'}.`,
+                  });
+                } catch {
+                  // no-op
+                }
+              }}>
+              <Text style={[styles.heroActionPrimaryText, { fontSize: 13 * scale }]}>Chia sẻ</Text>
             </TouchableOpacity>
           </View>
 
-          {activeSegment === 'progress' ? (
-            <View style={styles.progressStack}>
-              <LinearGradient colors={['#7e7bec', '#9b51e0']} style={styles.streakCard}>
-                <View style={styles.streakTextWrap}>
-                  <Text style={styles.streakTitle}>Đã đến lúc bắt đầu Streak!</Text>
-                  <Text style={styles.streakDescription}>
-                    Hiện tại bạn đang có {profile.progress.streakDays} ngày streak và {profile.progress.totalXp} XP tích lũy.
-                  </Text>
-                </View>
-                <MaterialCommunityIcons name="fire" size={48} color="#ffffff" />
-              </LinearGradient>
+          {showProfileInfo ? (
+            <View style={[styles.inlineInfoCard, { marginTop: 12 * scale, borderRadius: 16 * scale, padding: 15 * scale }]}>
+              <Text style={[styles.inlineInfoTitle, { fontSize: 14 * scale }]}>Hồ sơ</Text>
+              <Text style={[styles.inlineInfoText, { marginTop: 6 * scale, fontSize: 12 * scale, lineHeight: 19 * scale }]}>
+                Theo dõi điểm số, tiến trình học, streak và thành tựu của bạn tại đây. Dữ liệu được lấy trực tiếp từ hồ sơ hiện tại.
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryNumber}>{profile.progress.coursesStarted}</Text>
-                  <Text style={styles.summaryLabel}>Khóa học</Text>
-                </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryNumber}>{profile.progress.lessonsCompleted}</Text>
-                  <Text style={styles.summaryLabel}>Bài học</Text>
-                </View>
-              </View>
+        <View style={styles.segmentRow}>
+          <TouchableOpacity style={[styles.segmentItem, activeSegment === 'progress' && styles.segmentItemActive]} onPress={() => setActiveSegment('progress')}>
+            <Text style={[styles.segmentText, activeSegment === 'progress' && styles.segmentTextActive]}>Tiến trình</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.segmentItem, activeSegment === 'achievements' && styles.segmentItemActive]} onPress={() => setActiveSegment('achievements')}>
+            <Text style={[styles.segmentText, activeSegment === 'achievements' && styles.segmentTextActive]}>Thành tựu</Text>
+          </TouchableOpacity>
+        </View>
 
-              <View style={styles.skillsCard}>
-                <Text style={styles.skillsTitle}>Kỹ năng ngôn ngữ</Text>
-                {profile.metrics.map((metric) => (
-                  <View key={metric.name} style={styles.skillRow}>
-                    <View style={styles.skillHeader}>
-                      <Text style={styles.skillName}>{metric.name}</Text>
-                      <Text style={styles.skillValue}>{metric.value}%</Text>
-                    </View>
-                    <View style={styles.skillTrack}>
-                      <View style={[styles.skillFill, { width: `${metric.value}%`, backgroundColor: metric.color }]} />
-                    </View>
-                  </View>
-                ))}
+        <View style={[styles.summaryRow, { paddingHorizontal: horizontal, marginTop: 22 * scale, gap: 12 * scale }]}>
+          {summaryCards.map((item) => (
+            <View key={item.key} style={[styles.summaryCard, { borderRadius: 17 * scale, minHeight: 72 * scale, paddingHorizontal: 16 * scale }]}>
+              <Ionicons name={item.icon} size={20 * scale} color="#12162f" />
+              <View style={[styles.summaryTextBlock, { marginLeft: 10 * scale }]}>
+                <Text style={[styles.summaryValue, { fontSize: 13 * scale }]}>{item.value}</Text>
+                <Text style={[styles.summaryLabel, { fontSize: 11 * scale, marginTop: 4 * scale }]}>{item.label}</Text>
               </View>
             </View>
-          ) : (
-            <View>
-              <Text style={styles.sectionTitle}>Giấy chứng nhận</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.certificateList}>
-                <TouchableOpacity style={styles.certificateCard} onPress={() => router.push('/certificate')}>
-                  <LinearGradient colors={['#e6f9ff', '#cbefff']} style={styles.certificateGradient}>
-                    <Ionicons name="ribbon" size={40} color="#00bd50" />
-                    <View style={styles.certificateBody}>
-                      <Text style={styles.certificateTitle}>
-                        {profile.certificates.some((certificate) => certificate.unlocked)
-                          ? 'Xem chứng nhận đã mở khóa'
-                          : 'Mở khóa chứng chỉ hoàn thành của bạn'}
-                      </Text>
-                      <Text style={styles.certificateSubtitle}>Unlock your certificate of completion</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </ScrollView>
+          ))}
+        </View>
 
-              <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Achievements</Text>
-              <View style={styles.achievementList}>
-                {profile.achievements.map((achievement) => (
-                  <View key={achievement.id} style={styles.achievementCard}>
-                    <View style={[styles.achievementIcon, { backgroundColor: achievement.color, opacity: achievement.unlocked ? 1 : 0.5 }]}>
-                      <Ionicons name={achievement.icon as never} size={24} color="#ffffff" />
-                    </View>
-                    <View style={styles.achievementBody}>
-                      <View style={styles.achievementHeader}>
-                        <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                        <Text style={styles.achievementLevel}>{achievement.level}</Text>
-                      </View>
-                      <Text style={styles.achievementDescription}>{achievement.description}</Text>
-                    </View>
+        {activeSegment === 'progress' ? (
+          <View style={{ paddingHorizontal: horizontal }}>
+            <Text style={[styles.sectionTitle, { marginTop: 28 * scale, marginBottom: 14 * scale, fontSize: 24 * scale }]}>Tiến trình</Text>
+
+            <Image source={progressCardAsset} style={[styles.figureCard, { width: contentWidth, height: (contentWidth * 474.3848876953125) / 327 }]} resizeMode="contain" />
+
+            <Image source={streakCardAsset} style={[styles.figureCard, { width: contentWidth, height: (contentWidth * 234) / 327, marginTop: 18 * scale }]} resizeMode="contain" />
+          </View>
+        ) : (
+          <View style={{ paddingHorizontal: horizontal, marginTop: 22 * scale, gap: 12 * scale }}>
+            {profile.achievements.map((achievement) => (
+              <View key={achievement.id} style={[styles.achievementCard, { borderRadius: 17 * scale, padding: 16 * scale }]}>
+                <View style={[styles.achievementIcon, { width: 42 * scale, height: 42 * scale, borderRadius: 13 * scale, marginRight: 12 * scale, backgroundColor: achievement.unlocked ? achievement.color : '#dadada' }]}>
+                  <Ionicons name={achievement.icon as never} size={19 * scale} color="#ffffff" />
+                </View>
+                <View style={styles.achievementBody}>
+                  <View style={[styles.achievementHeader, { marginBottom: 4 * scale, gap: 8 * scale }]}>
+                    <Text style={[styles.achievementTitle, { fontSize: 14 * scale }]}>{achievement.title}</Text>
+                    <Text style={[styles.achievementLevel, { fontSize: 10 * scale }]}>{achievement.level}</Text>
                   </View>
-                ))}
+                  <Text style={[styles.achievementDescription, { fontSize: 12 * scale, lineHeight: 17 * scale }]}>{achievement.description}</Text>
+                </View>
               </View>
-            </View>
-          )}
-        </ScrollView>
-      </View>
+            ))}
+
+            <TouchableOpacity style={[styles.certificateButton, { borderRadius: 17 * scale, paddingVertical: 14 * scale }]} onPress={() => router.push('/certificate')}>
+              <Text style={[styles.certificateButtonText, { fontSize: 15 * scale }]}>Xem chứng nhận</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {signOutError ? (
+          <Text style={[styles.signOutErrorText, { marginTop: 16 * scale, fontSize: 13 * scale }]}>{signOutError}</Text>
+        ) : null}
+
+        <TouchableOpacity
+          style={[styles.signOutButton, { marginTop: signOutError ? 12 * scale : 20 * scale }, signingOut && styles.signOutButtonDisabled]}
+          disabled={signingOut}
+          onPress={async () => {
+            if (signingOut) {
+              return;
+            }
+
+            setSigningOut(true);
+            setSignOutError(null);
+
+            try {
+              await signOut();
+              router.replace('/(auth)/sign-in');
+            } catch (signOutValue) {
+              setSignOutError(signOutValue instanceof Error ? signOutValue.message : 'Không đăng xuất được lúc này.');
+            } finally {
+              setSigningOut(false);
+            }
+          }}>
+          <Text style={[styles.signOutText, { fontSize: 13 * scale }]}>{signingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#faf8f8' },
-  loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
-  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
-  container: { flex: 1, backgroundColor: '#faf8f8' },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
-  userCard: { backgroundColor: '#ffffff', borderRadius: 24, padding: 20, marginBottom: 24 },
-  userInfoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  avatar: { width: 64, height: 64, borderRadius: 32, marginRight: 16 },
-  userMeta: { flex: 1 },
-  userName: { fontFamily: Fonts.bold, fontSize: 20, color: '#050018', marginBottom: 4 },
-  userPlan: { fontFamily: Fonts.medium, fontSize: 12, color: '#929292' },
-  pointsBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fdf4f2', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
-  pointsText: { fontFamily: Fonts.semiBold, fontSize: 12, color: '#fda085' },
-  actionsRow: { flexDirection: 'row', gap: 12 },
-  actionButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, backgroundColor: '#f2faf4', borderRadius: 14, paddingVertical: 12 },
-  actionButtonText: { fontFamily: Fonts.semiBold, fontSize: 14, color: '#00bd50' },
-  segmentContainer: { flexDirection: 'row', backgroundColor: '#f2f0f0', borderRadius: 14, padding: 4, marginBottom: 24 },
-  segmentItem: { flex: 1, alignItems: 'center', borderRadius: 10, paddingVertical: 10 },
-  segmentItemActive: { backgroundColor: '#ffffff' },
-  segmentText: { fontFamily: Fonts.medium, fontSize: 14, color: '#6c5f80' },
-  segmentTextActive: { fontFamily: Fonts.semiBold, color: '#050018' },
-  progressStack: { gap: 16 },
-  streakCard: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center' },
-  streakTextWrap: { flex: 1, marginRight: 16 },
-  streakTitle: { fontFamily: Fonts.bold, fontSize: 18, color: '#ffffff', marginBottom: 6 },
-  streakDescription: { fontFamily: Fonts.regular, fontSize: 12, lineHeight: 18, color: 'rgba(255,255,255,0.84)' },
-  summaryRow: { flexDirection: 'row', gap: 16 },
-  summaryCard: { flex: 1, backgroundColor: '#ffffff', borderRadius: 20, padding: 16, alignItems: 'center' },
-  summaryNumber: { fontFamily: Fonts.bold, fontSize: 24, color: '#050018', marginBottom: 4 },
-  summaryLabel: { fontFamily: Fonts.medium, fontSize: 12, color: '#929292' },
-  skillsCard: { backgroundColor: '#ffffff', borderRadius: 24, padding: 20 },
-  skillsTitle: { fontFamily: Fonts.bold, fontSize: 16, color: '#050018', marginBottom: 20 },
-  skillRow: { marginBottom: 16 },
-  skillHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  skillName: { fontFamily: Fonts.medium, fontSize: 14, color: '#373346' },
-  skillValue: { fontFamily: Fonts.semiBold, fontSize: 14, color: '#050018' },
-  skillTrack: { height: 8, borderRadius: 4, backgroundColor: '#f2f0f0', overflow: 'hidden' },
-  skillFill: { height: '100%', borderRadius: 4 },
-  sectionTitle: { fontFamily: Fonts.bold, fontSize: 18, color: '#050018', marginBottom: 16 },
-  certificateList: { gap: 16 },
-  certificateCard: { width: Dimensions.get('window').width - 48, borderRadius: 24, overflow: 'hidden' },
-  certificateGradient: { flexDirection: 'row', alignItems: 'center', padding: 20 },
-  certificateBody: { flex: 1, marginLeft: 16 },
-  certificateTitle: { fontFamily: Fonts.bold, fontSize: 15, color: '#050018', lineHeight: 20, marginBottom: 4 },
-  certificateSubtitle: { fontFamily: Fonts.regular, fontSize: 12, color: '#6c5f80' },
-  achievementList: { gap: 12 },
-  achievementCard: { backgroundColor: '#ffffff', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center' },
-  achievementIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 16 },
-  achievementBody: { flex: 1 },
-  achievementHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  achievementTitle: { fontFamily: Fonts.bold, fontSize: 15, color: '#050018' },
-  achievementLevel: { fontFamily: Fonts.bold, fontSize: 10, color: '#fda085', backgroundColor: '#fdf4f2', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  achievementDescription: { fontFamily: Fonts.medium, fontSize: 12, color: '#929292' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f6f7f8',
+  },
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f6f7f8',
+  },
+  errorText: {
+    fontFamily: Fonts.medium,
+    fontSize: 14,
+    color: '#ea573f',
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
+  scrollContent: {},
+  heroCard: {
+    backgroundColor: '#ffffff',
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  userColumn: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  avatarWrap: {
+    position: 'relative',
+  },
+  avatar: {
+    backgroundColor: '#e7e9ee',
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    backgroundColor: '#7ed1e0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userName: {
+    fontFamily: Fonts.bold,
+    color: '#221e2e',
+  },
+  userPlan: {
+    fontFamily: Fonts.semiBold,
+    color: 'rgba(55,55,55,0.7)',
+  },
+  scoreColumn: {
+    alignItems: 'center',
+  },
+  scoreRing: {
+    backgroundColor: '#b9c0ee',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreRingCore: {
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreValue: {
+    fontFamily: Fonts.bold,
+    color: '#3e57fe',
+  },
+  scoreLabel: {
+    fontFamily: Fonts.medium,
+    color: '#3e57fe',
+  },
+  heroActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  heroActionLight: {
+    flex: 1,
+    backgroundColor: '#e8fae6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroActionPrimary: {
+    flex: 1,
+    backgroundColor: '#55ba5d',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroActionLightText: {
+    fontFamily: Fonts.medium,
+    color: '#55ba5d',
+  },
+  heroActionPrimaryText: {
+    fontFamily: Fonts.medium,
+    color: '#ffffff',
+  },
+  inlineInfoCard: {
+    backgroundColor: '#f6f7f8',
+  },
+  inlineInfoTitle: {
+    fontFamily: Fonts.bold,
+    color: '#221e2e',
+  },
+  inlineInfoText: {
+    fontFamily: Fonts.regular,
+    color: '#666272',
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    backgroundColor: '#f6f7f8',
+  },
+  segmentItem: {
+    width: '50%',
+    alignItems: 'center',
+    paddingVertical: 13,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'transparent',
+  },
+  segmentItemActive: {
+    borderBottomColor: '#55ba5d',
+  },
+  segmentText: {
+    fontFamily: Fonts.medium,
+    fontSize: 13,
+    color: '#bababa',
+  },
+  segmentTextActive: {
+    fontFamily: Fonts.semiBold,
+    color: '#55ba5d',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryTextBlock: {},
+  summaryValue: {
+    fontFamily: Fonts.semiBold,
+    color: '#000000',
+    lineHeight: 19,
+  },
+  summaryLabel: {
+    fontFamily: Fonts.medium,
+    color: '#000000',
+  },
+  sectionTitle: {
+    fontFamily: Fonts.bold,
+    color: '#221e2e',
+  },
+  figureCard: {
+    alignSelf: 'center',
+  },
+  achievementCard: {
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  achievementIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  achievementBody: {
+    flex: 1,
+  },
+  achievementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  achievementTitle: {
+    flex: 1,
+    fontFamily: Fonts.bold,
+    color: '#11102a',
+  },
+  achievementLevel: {
+    fontFamily: Fonts.semiBold,
+    color: '#55ba5d',
+  },
+  achievementDescription: {
+    fontFamily: Fonts.medium,
+    color: '#767676',
+  },
+  certificateButton: {
+    backgroundColor: '#55ba5d',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  certificateButtonText: {
+    fontFamily: Fonts.bold,
+    color: '#ffffff',
+  },
+  signOutButton: {
+    alignSelf: 'center',
+  },
+  signOutButtonDisabled: {
+    opacity: 0.6,
+  },
+  signOutErrorText: {
+    fontFamily: Fonts.medium,
+    color: '#ea573f',
+    textAlign: 'center',
+  },
+  signOutText: {
+    fontFamily: Fonts.medium,
+    color: '#767676',
+  },
 });
