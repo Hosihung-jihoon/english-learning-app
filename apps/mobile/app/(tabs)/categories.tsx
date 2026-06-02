@@ -1,34 +1,89 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import type { CategorySummary, CollectionSummary } from '../../../../shared/types';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { CollectionSummary } from '../../../../shared/types';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
-import { filterLabels, getCollections } from '@/services/content-service';
+import { getCollections } from '@/services/content-service';
 
-const filters = ['Tất cả', 'Từ vựng', 'Mẫu câu', 'Ngữ pháp', 'Nghe nói'] as const;
+type CategoryFilter = 'all' | 'vocabulary' | 'sentence' | 'grammar' | 'speaking';
 
-function toCategory(collection: CollectionSummary): CategorySummary {
-  return {
-    id: collection.id,
-    title: collection.title,
-    countLabel: `${collection.flashcardCount} flashcard`,
-    filter: collection.filter,
-    collectionId: collection.id,
-    colors: collection.colors,
-    icon: collection.icon,
-  };
+interface FigmaCategoryCard {
+  key: string;
+  title: string;
+  countLabel: string;
+  filter: CategoryFilter;
+  image?: number;
+  accent?: string;
+}
+
+const filters: Array<{ key: CategoryFilter; label: string }> = [
+  { key: 'all', label: 'Tất cả (20)' },
+  { key: 'vocabulary', label: 'Từ vựng' },
+  { key: 'sentence', label: 'Mẫu câu' },
+  { key: 'grammar', label: 'Ngữ pháp' },
+  { key: 'speaking', label: 'Nghe nói' },
+];
+
+const figmaCategoryCards: FigmaCategoryCard[] = [
+  { key: 'all', title: 'Tất cả', countLabel: '100 flashcard', filter: 'all', accent: '#59be5b' },
+  {
+    key: 'basic-talk',
+    title: 'Giao tiếp\ncơ bản',
+    countLabel: '20 flashcard',
+    filter: 'sentence',
+    image: require('../../assets/images/figma-category-card-basic-talk.png'),
+  },
+  {
+    key: 'grammar',
+    title: 'Ngữ pháp',
+    countLabel: '30 flashcard',
+    filter: 'grammar',
+    image: require('../../assets/images/figma-category-card-grammar.png'),
+  },
+  {
+    key: 'ielts',
+    title: '6.0 Ielts',
+    countLabel: '10 flashcard',
+    filter: 'speaking',
+    image: require('../../assets/images/figma-category-card-ielts.png'),
+  },
+];
+
+function matchCollectionId(cardKey: string, collections: CollectionSummary[]) {
+  const lowerTitles = collections.map((item) => ({ ...item, lower: item.title.toLowerCase() }));
+
+  if (cardKey === 'basic-talk') {
+    return lowerTitles.find((item) => item.lower.includes('giao tiếp'))?.id ?? lowerTitles[1]?.id ?? lowerTitles[0]?.id;
+  }
+
+  if (cardKey === 'grammar') {
+    return lowerTitles.find((item) => item.lower.includes('ngữ pháp') || item.lower.includes('grammar'))?.id ?? lowerTitles[0]?.id;
+  }
+
+  if (cardKey === 'ielts') {
+    return lowerTitles.find((item) => item.lower.includes('ielts'))?.id ?? lowerTitles[2]?.id ?? lowerTitles[0]?.id;
+  }
+
+  return lowerTitles[0]?.id;
 }
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const tabBarHeight = useBottomTabBarHeight();
   const { token } = useAuth();
   const [search, setSearch] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<(typeof filters)[number]>('Tất cả');
-  const [categories, setCategories] = useState<CategorySummary[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<CategoryFilter>('all');
+  const [collections, setCollections] = useState<CollectionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const scale = Math.min(width / 375, 1) * 0.84;
+  const horizontal = 20 * scale;
 
   useEffect(() => {
     if (!token) {
@@ -37,10 +92,16 @@ export default function CategoriesScreen() {
     }
 
     let mounted = true;
+
     getCollections(token)
-      .then((collections) => {
+      .then((items) => {
         if (mounted) {
-          setCategories(collections.map(toCategory));
+          setCollections(items);
+        }
+      })
+      .catch((loadError) => {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được thể loại.');
         }
       })
       .finally(() => {
@@ -54,99 +115,103 @@ export default function CategoriesScreen() {
     };
   }, [token]);
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter((item) => {
-      const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
-      const matchesFilter = selectedFilter === 'Tất cả' || filterLabels[item.filter] === selectedFilter;
+  const filteredCards = useMemo(() => {
+    return figmaCategoryCards.filter((card) => {
+      const matchesSearch = card.title.toLowerCase().includes(search.toLowerCase());
+      const matchesFilter = selectedFilter === 'all' || card.filter === selectedFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [categories, search, selectedFilter]);
+  }, [search, selectedFilter]);
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingScreen}>
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
         <ActivityIndicator size="large" color="#00bd50" />
       </SafeAreaView>
     );
   }
 
+  if (error && collections.length === 0) {
+    return (
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.replace('/(tabs)/collection')}>
-            <Ionicons name="arrow-back" size={24} color="#050018" />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontal, paddingBottom: tabBarHeight + 20 * scale }]}>
+        <View style={[styles.header, { paddingTop: 8 * scale, paddingBottom: 16 * scale }]}>
+          <TouchableOpacity style={[styles.backButton, { width: 38 * scale, height: 38 * scale, borderRadius: 19 * scale }]} onPress={() => router.replace('/(tabs)/collection')}>
+            <Ionicons name="chevron-back" size={21 * scale} color="#11102a" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Thể loại</Text>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => router.push({ pathname: '/coming-soon', params: { title: 'Tùy chọn thể loại' } } as never)}>
-            <Ionicons name="options-outline" size={22} color="#050018" />
-          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { marginLeft: 10 * scale, fontSize: 23 * scale }]}>Thể loại</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={18} color="#8e8e93" />
+        <View style={[styles.searchContainer, { borderRadius: 22 * scale, paddingHorizontal: 16 * scale, height: 58 * scale }]}>
+          <Ionicons name="search-outline" size={19 * scale} color="#6f6d82" />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { marginLeft: 10 * scale, fontSize: 14 * scale }]}
             placeholder="Tìm kiếm"
-            placeholderTextColor="#8e8e93"
+            placeholderTextColor="#6f6d82"
             value={search}
             onChangeText={setSearch}
           />
-          <TouchableOpacity onPress={() => router.push({ pathname: '/coming-soon', params: { title: 'Bộ lọc thể loại' } } as never)}>
-            <Ionicons name="funnel-outline" size={18} color="#27ae60" />
-          </TouchableOpacity>
         </View>
 
-        <View style={styles.filtersArea}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
-            {filters.map((filter) => {
-              const active = filter === selectedFilter;
-              return (
-                <TouchableOpacity key={filter} style={[styles.filterChip, active && styles.filterChipActive]} onPress={() => setSelectedFilter(filter)}>
-                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{filter}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+        <View style={[styles.resultHeader, { marginTop: 22 * scale, marginBottom: 14 * scale }]}>
+          <Text style={[styles.resultTitle, { fontSize: 22 * scale, marginBottom: 8 * scale }]}>Lọc theo danh mục</Text>
+          <Text style={[styles.resultCount, { fontSize: 14 * scale }]}>128 kết quả được phát hiện</Text>
         </View>
 
-        <View style={styles.resultHeader}>
-          <Text style={styles.resultTitle}>Lọc theo danh mục</Text>
-          <Text style={styles.resultCount}>{filteredCategories.length} kết quả được phát hiện</Text>
+        <View style={[styles.filtersWrap, { gap: 10 * scale, marginBottom: 18 * scale }]}>
+          {filters.map((filter) => {
+            const active = filter.key === selectedFilter;
+
+            return (
+              <TouchableOpacity
+                key={filter.key}
+                style={[styles.filterChip, { borderRadius: 999, paddingHorizontal: 14 * scale, paddingVertical: 10 * scale }, active && styles.filterChipActive]}
+                onPress={() => setSelectedFilter(filter.key)}>
+                <Text style={[styles.filterChipText, { fontSize: 14 * scale }, active && styles.filterChipTextActive]}>{filter.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        <FlatList
-          data={filteredCategories}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.gridContent}
-          columnWrapperStyle={styles.gridRow}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.cardWrap}
-              activeOpacity={0.88}
-              onPress={() => router.push({ pathname: '/(tabs)/collection', params: { collectionId: item.collectionId } })}>
-              <LinearGradient colors={item.colors} style={styles.card}>
-                <View style={styles.cardIconBubble}>
-                  <Ionicons name={item.icon as never} size={22} color="#ffffff" />
-                </View>
-                <View>
-                  <Text style={styles.cardTitle} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.cardCount}>{item.countLabel}</Text>
-                  <Text style={styles.cardCount}>{filterLabels[item.filter]}</Text>
-                </View>
-                <View style={styles.cardDecoration} />
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+        <View style={[styles.grid, { rowGap: 14 * scale }]}>
+          {filteredCards.map((card) => {
+            const collectionId = matchCollectionId(card.key, collections);
+
+            return (
+              <TouchableOpacity
+                key={card.key}
+                style={[styles.card, { borderRadius: 20 * scale }]}
+                activeOpacity={0.9}
+                onPress={() => {
+                  if (collectionId) {
+                    router.push({ pathname: '/(tabs)/collection', params: { collectionId } });
+                  }
+                }}>
+                {card.image ? (
+                  <Image source={card.image} style={styles.cardImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.allCard, { paddingHorizontal: 16 * scale, paddingTop: 22 * scale }]}>
+                    <Text style={[styles.allCardTitle, { color: card.accent || '#59be5b', fontSize: 19 * scale, marginBottom: 10 * scale }]}>{card.title}</Text>
+                    <Text style={[styles.allCardCount, { color: card.accent || '#59be5b', fontSize: 14 * scale }]}>{card.countLabel}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -154,37 +219,81 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
-  container: { flex: 1, backgroundColor: '#faf8f8' },
-  header: { paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: 20, color: '#050018' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
+  scrollContent: {},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontFamily: Fonts.bold,
+    color: '#11102a',
+  },
+  headerSpacer: { flex: 1 },
   searchContainer: {
-    marginHorizontal: 24,
-    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 52,
-    gap: 10,
   },
-  searchInput: { flex: 1, fontFamily: Fonts.medium, fontSize: 15, color: '#050018' },
-  filtersArea: { height: 48, marginBottom: 16 },
-  filtersContent: { paddingHorizontal: 24, gap: 8, alignItems: 'center' },
-  filterChip: { backgroundColor: '#f2f0f0', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
-  filterChipActive: { backgroundColor: '#00bd50' },
-  filterChipText: { fontFamily: Fonts.medium, fontSize: 14, color: '#6c5f80' },
-  filterChipTextActive: { fontFamily: Fonts.semiBold, color: '#ffffff' },
-  resultHeader: { paddingHorizontal: 24, marginBottom: 16 },
-  resultTitle: { fontFamily: Fonts.bold, fontSize: 18, color: '#050018', marginBottom: 4 },
-  resultCount: { fontFamily: Fonts.medium, fontSize: 12, color: '#929292' },
-  gridContent: { paddingHorizontal: 16, paddingBottom: 24 },
-  gridRow: { justifyContent: 'space-between', paddingHorizontal: 8 },
-  cardWrap: { flex: 1, maxWidth: '48%', marginBottom: 16 },
-  card: { height: 140, borderRadius: 24, overflow: 'hidden', padding: 16, justifyContent: 'space-between' },
-  cardIconBubble: { width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.24)', alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontFamily: Fonts.bold, fontSize: 15, color: '#ffffff', marginBottom: 4 },
-  cardCount: { fontFamily: Fonts.medium, fontSize: 12, color: 'rgba(255,255,255,0.84)' },
-  cardDecoration: { position: 'absolute', bottom: -18, right: -18, width: 78, height: 78, borderRadius: 39, backgroundColor: 'rgba(255,255,255,0.12)' },
+  searchInput: {
+    flex: 1,
+    fontFamily: Fonts.medium,
+    color: '#11102a',
+  },
+  resultHeader: {},
+  resultTitle: {
+    fontFamily: Fonts.bold,
+    color: '#11102a',
+  },
+  resultCount: {
+    fontFamily: Fonts.medium,
+    color: '#11102a',
+  },
+  filtersWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    backgroundColor: '#ffffff',
+  },
+  filterChipActive: {
+    backgroundColor: '#59be5b',
+  },
+  filterChipText: {
+    fontFamily: Fonts.semiBold,
+    color: '#6f6d82',
+  },
+  filterChipTextActive: {
+    color: '#ffffff',
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  card: {
+    width: '48%',
+    aspectRatio: 1,
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  allCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  allCardTitle: {
+    fontFamily: Fonts.bold,
+  },
+  allCardCount: {
+    fontFamily: Fonts.medium,
+  },
 });

@@ -1,19 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { TargetContent, TargetType } from '../../../../shared/types';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 import { getTargets } from '@/services/content-service';
 
+const targetIllustration = require('../../assets/images/figma-target-illustration-ab.png');
+
+function getDifficulty(type: TargetType) {
+  return type === 'toeic' ? 'Dễ' : 'Nâng cao';
+}
+
 export default function TargetSelectionScreen() {
   const router = useRouter();
   const { token } = useAuth();
+  const { width } = useWindowDimensions();
+  const tabBarHeight = useBottomTabBarHeight();
   const [targets, setTargets] = useState<TargetContent[]>([]);
-  const [selectedTarget, setSelectedTarget] = useState<TargetType>('toeic');
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -22,14 +33,16 @@ export default function TargetSelectionScreen() {
     }
 
     let mounted = true;
+
     getTargets(token)
       .then((items) => {
-        if (!mounted) {
-          return;
+        if (mounted) {
+          setTargets(items);
         }
-        setTargets(items);
-        if (items[0]) {
-          setSelectedTarget(items[0].type);
+      })
+      .catch((loadError) => {
+        if (mounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Không tải được mục tiêu học tập.');
         }
       })
       .finally(() => {
@@ -43,76 +56,101 @@ export default function TargetSelectionScreen() {
     };
   }, [token]);
 
+  const selectedTarget = useMemo(() => targets[selectedIndex] ?? targets[0], [selectedIndex, targets]);
+  const scale = Math.min(width / 375, 1) * 0.84;
+  const horizontal = 20 * scale;
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingScreen}>
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
         <ActivityIndicator size="large" color="#00bd50" />
       </SafeAreaView>
     );
   }
 
+  if (!selectedTarget) {
+    return (
+      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
+        <Text style={styles.errorText}>{error || 'Chưa có dữ liệu mục tiêu.'}</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
+
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.replace('/(tabs)')}>
-            <Ionicons name="arrow-back" size={24} color="#050018" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Lộ trình học</Text>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => router.push({ pathname: '/coming-soon', params: { title: 'Thông tin lộ trình' } } as never)}>
-            <Ionicons name="information-circle-outline" size={22} color="#292d32" />
-          </TouchableOpacity>
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: tabBarHeight + 96 * scale }}>
+          <View style={[styles.header, { paddingHorizontal: horizontal, paddingTop: 12 * scale }]}>
+            <TouchableOpacity style={[styles.iconButton, { width: 38 * scale, height: 38 * scale, borderRadius: 19 * scale }]} onPress={() => router.replace('/(tabs)')}>
+              <Ionicons name="chevron-back" size={21 * scale} color="#050018" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconButton, { width: 38 * scale, height: 38 * scale, borderRadius: 19 * scale }]}
+              onPress={() => setShowInfo((current) => !current)}>
+              <Ionicons name="alert-circle" size={20 * scale} color="#292d32" />
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>Chọn mục tiêu</Text>
-          <Text style={styles.subtitle}>
-            Lựa chọn mục tiêu phù hợp với bạn, SUMO sẽ giúp bạn đi đúng nhịp học ngay từ đầu.
-          </Text>
+          {showInfo ? (
+            <View style={[styles.infoCard, { marginHorizontal: horizontal, marginTop: 12 * scale, borderRadius: 16 * scale, padding: 15 * scale }]}>
+              <Text style={[styles.infoCardTitle, { fontSize: 14 * scale }]}>Thông tin mục tiêu</Text>
+              <Text style={[styles.infoCardText, { marginTop: 6 * scale, fontSize: 12 * scale, lineHeight: 19 * scale }]}>
+                Hãy chọn mục tiêu gần nhất với bạn. Sau đó app sẽ gợi ý lộ trình, khóa học và bài đánh giá phù hợp để bắt đầu nhanh hơn.
+              </Text>
+            </View>
+          ) : null}
 
-          {targets.map((target, index) => {
-            const active = target.type === selectedTarget;
-            const gradient: [string, string] = index === 0 ? ['#fb6e52', '#ea573f'] : ['#a1d469', '#8dc050'];
+          <View style={{ paddingHorizontal: horizontal, marginTop: 14 * scale }}>
+            <Text style={[styles.title, { fontSize: 27 * scale, lineHeight: 34 * scale }]}>Chọn mục tiêu</Text>
+            <Text style={[styles.subtitle, { fontSize: 13 * scale, lineHeight: 19 * scale, marginTop: 12 * scale }]}>
+              Lựa chọn mục tiêu phù hợp với bạn, SUMO sẽ giúp bạn đạt được mục tiêu đó.
+            </Text>
+          </View>
 
-            return (
-              <TouchableOpacity
-                key={target.type}
-                style={[styles.card, active && styles.cardActive]}
-                activeOpacity={0.92}
-                onPress={() => setSelectedTarget(target.type)}>
-                <View style={styles.cardMedia}>
-                  <LinearGradient colors={gradient} style={styles.cardMediaGradient}>
-                    <Ionicons name={index === 0 ? 'school-outline' : 'ribbon-outline'} size={30} color="#ffffff" />
-                  </LinearGradient>
-                </View>
-                <View style={styles.cardBody}>
-                  <View style={[styles.badge, index === 1 && styles.badgeSecondary]}>
-                    <Text style={styles.badgeText}>{target.badge}</Text>
-                  </View>
-                  <Text style={styles.cardTitle}>{target.title}</Text>
-                  <Text style={styles.cardDescription}>{target.description}</Text>
-                  <Text style={styles.cardMeta}>
-                    {target.modules} • {target.hours}
-                  </Text>
-                </View>
-                {active && <Ionicons name="checkmark-circle" size={24} color="#00bd50" />}
-              </TouchableOpacity>
-            );
-          })}
+          <View
+            style={[
+              styles.cardWrap,
+              {
+                marginHorizontal: 26 * scale,
+                marginTop: 22 * scale,
+                borderRadius: 34 * scale,
+                paddingHorizontal: 18 * scale,
+                paddingTop: 22 * scale,
+                paddingBottom: 24 * scale,
+              },
+            ]}>
+            <Image source={targetIllustration} style={{ width: 182 * scale, height: 182 * scale, alignSelf: 'center' }} resizeMode="contain" />
+
+            <View style={[styles.difficultyChip, { marginTop: 12 * scale, borderRadius: 22 * scale, paddingHorizontal: 22 * scale, paddingVertical: 8 * scale }]}>
+              <Text style={[styles.difficultyText, { fontSize: 14 * scale }]}>{getDifficulty(selectedTarget.type)}</Text>
+            </View>
+
+            <Text style={[styles.cardTitle, { fontSize: 20 * scale, lineHeight: 26 * scale, marginTop: 24 * scale }]}>{selectedTarget.title.toUpperCase()}</Text>
+            <Text style={[styles.cardDescription, { fontSize: 13 * scale, lineHeight: 19 * scale, marginTop: 12 * scale }]}>{selectedTarget.description}</Text>
+            <Text style={[styles.cardMeta, { fontSize: 13 * scale, marginTop: 22 * scale }]}>
+              {selectedTarget.modules} {'\u2022'} {selectedTarget.hours}
+            </Text>
+          </View>
+
+          {targets.length > 1 ? (
+            <View style={[styles.switchRow, { marginTop: 16 * scale }]}>
+              {targets.map((item, index) => {
+                const active = index === selectedIndex;
+
+                return <TouchableOpacity key={item.type} style={[styles.switchDot, active && styles.switchDotActive]} onPress={() => setSelectedIndex(index)} />;
+              })}
+            </View>
+          ) : null}
         </ScrollView>
 
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, { paddingHorizontal: 52 * scale, paddingBottom: tabBarHeight + 8 * scale, paddingTop: 10 * scale }]}>
           <TouchableOpacity
-            style={styles.primaryButton}
-            activeOpacity={0.88}
-            onPress={() => router.push({ pathname: '/target-detail', params: { type: selectedTarget } })}>
-            <Text style={styles.primaryButtonText}>Chọn mục tiêu</Text>
+            style={[styles.primaryButton, { height: 50 * scale, borderRadius: 999 }]}
+            activeOpacity={0.9}
+            onPress={() => router.push({ pathname: '/target-detail', params: { type: selectedTarget.type } })}>
+            <Text style={[styles.primaryButtonText, { fontSize: 15 * scale }]}>Chọn mục tiêu</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -122,69 +160,26 @@ export default function TargetSelectionScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#faf8f8' },
-  loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
   container: { flex: 1, backgroundColor: '#faf8f8' },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { fontFamily: Fonts.bold, fontSize: 20, color: '#050018' },
-  scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 8 },
-  title: { fontFamily: Fonts.bold, fontSize: 32, color: '#050018', marginBottom: 8 },
-  subtitle: { fontFamily: Fonts.regular, fontSize: 14, color: '#373346', lineHeight: 21, marginBottom: 28 },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    marginBottom: 16,
-  },
-  cardActive: { borderColor: '#00bd50' },
-  cardMedia: { width: 80, height: 80, borderRadius: 16, overflow: 'hidden' },
-  cardMediaGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  cardBody: { flex: 1 },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#27ae60',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    marginBottom: 8,
-  },
-  badgeSecondary: { backgroundColor: '#8dc050' },
-  badgeText: { fontFamily: Fonts.bold, fontSize: 12, color: '#ffffff' },
-  cardTitle: { fontFamily: Fonts.bold, fontSize: 18, color: '#130031', marginBottom: 6 },
-  cardDescription: { fontFamily: Fonts.regular, fontSize: 12, color: '#6c5f80', lineHeight: 17, marginBottom: 8 },
-  cardMeta: { fontFamily: Fonts.medium, fontSize: 12, color: '#6124c4' },
-  bottomBar: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: '#faf8f8',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#ece7f0',
-  },
-  primaryButton: {
-    backgroundColor: '#00bd50',
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: { fontFamily: Fonts.bold, fontSize: 16, color: '#ffffff' },
+  loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#faf8f8' },
+  errorText: { fontFamily: Fonts.medium, fontSize: 14, color: '#ea573f', textAlign: 'center', paddingHorizontal: 24 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  iconButton: { backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  infoCard: { backgroundColor: '#ffffff' },
+  infoCardTitle: { fontFamily: Fonts.bold, color: '#050018' },
+  infoCardText: { fontFamily: Fonts.regular, color: '#666272' },
+  title: { fontFamily: Fonts.bold, color: '#050018' },
+  subtitle: { fontFamily: Fonts.regular, color: '#373346' },
+  cardWrap: { backgroundColor: '#ffffff' },
+  difficultyChip: { alignSelf: 'center', backgroundColor: '#27ae60' },
+  difficultyText: { fontFamily: Fonts.semiBold, color: '#ffffff' },
+  cardTitle: { fontFamily: Fonts.bold, color: '#130031', textAlign: 'center' },
+  cardDescription: { fontFamily: Fonts.regular, color: '#6c5f80', textAlign: 'center' },
+  cardMeta: { fontFamily: Fonts.medium, color: '#6124c4', textAlign: 'center' },
+  switchRow: { flexDirection: 'row', alignSelf: 'center', gap: 8 },
+  switchDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#d9d9d9' },
+  switchDotActive: { width: 18, backgroundColor: '#55ba5d' },
+  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#faf8f8' },
+  primaryButton: { backgroundColor: '#55ba5d', alignItems: 'center', justifyContent: 'center' },
+  primaryButtonText: { fontFamily: Fonts.bold, color: '#ffffff' },
 });
